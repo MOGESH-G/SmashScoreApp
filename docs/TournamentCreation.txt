@@ -1,0 +1,404 @@
+// screens/TournamentCreationScreen.js
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  TextInput,
+  Alert,
+} from 'react-native';
+import { useApp } from '../context/AppContext';
+import { generateUUID } from '../utils/helpers';
+import { BracketGenerator } from '../utils/BracketGenerator';
+import AdService from '../services/AdService';
+
+const TournamentCreationScreen = ({ navigation }) => {
+  const { players, createTournament } = useApp();
+  const [tournamentName, setTournamentName] = useState('');
+  const [selectedFormat, setSelectedFormat] = useState('single_elim');
+  const [selectedMatchFormat, setSelectedMatchFormat] = useState('bo3');
+  const [selectedPlayers, setSelectedPlayers] = useState([]);
+
+  const tournamentFormats = [
+    {
+      id: 'single_elim',
+      name: 'Single Elimination',
+      description: 'Players are eliminated after one loss. Quick and decisive.',
+      minPlayers: 4
+    },
+    {
+      id: 'double_elim',
+      name: 'Double Elimination',
+      description: 'Players get a second chance in the losers bracket.',
+      minPlayers: 4
+    },
+    {
+      id: 'round_robin',
+      name: 'Round Robin',
+      description: 'Every player plays every other player.',
+      minPlayers: 3
+    },
+    {
+      id: 'swiss',
+      name: 'Swiss System',
+      description: 'Players are matched based on performance.',
+      minPlayers: 6
+    }
+  ];
+
+  const matchFormats = [
+    { id: 'bo3', name: 'Best of 3', description: 'First to 2 wins' },
+    { id: 'bo5', name: 'Best of 5', description: 'First to 3 wins' }
+  ];
+
+  const togglePlayerSelection = (player) => {
+    setSelectedPlayers(prev => 
+      prev.find(p => p.id === player.id)
+        ? prev.filter(p => p.id !== player.id)
+        : [...prev, player]
+    );
+  };
+
+  const handleCreateTournament = async () => {
+    if (!tournamentName.trim()) {
+      Alert.alert('Error', 'Tournament name is required');
+      return;
+    }
+
+    const selectedFormat = tournamentFormats.find(f => f.id === selectedFormat);
+    if (selectedPlayers.length < selectedFormat?.minPlayers) {
+      Alert.alert(
+        'Error', 
+        `${selectedFormat.name} requires at least ${selectedFormat.minPlayers} players`
+      );
+      return;
+    }
+
+    const tournament = {
+      id: generateUUID(),
+      name: tournamentName.trim(),
+      format: selectedFormat,
+      matchFormat: selectedMatchFormat,
+      players: selectedPlayers,
+      matches: [],
+      bracket: {},
+      status: 'setup',
+      currentRound: 1,
+      createdAt: new Date().toISOString(),
+      completedAt: null
+    };
+
+    // Generate bracket based on format
+    switch (selectedFormat) {
+      case 'single_elim':
+        tournament.bracket = BracketGenerator.generateSingleElimination(selectedPlayers);
+        break;
+      case 'double_elim':
+        tournament.bracket = BracketGenerator.generateDoubleElimination(selectedPlayers);
+        break;
+      case 'round_robin':
+        tournament.bracket = BracketGenerator.generateRoundRobin(selectedPlayers);
+        break;
+      case 'swiss':
+        tournament.bracket = BracketGenerator.generateSwiss(selectedPlayers);
+        break;
+    }
+
+    tournament.status = 'active';
+
+    await createTournament(tournament);
+
+    // Show interstitial ad
+    AdService.showInterstitialAd();
+
+    Alert.alert(
+      'Success',
+      'Tournament created successfully!',
+      [
+        {
+          text: 'OK',
+          onPress: () => navigation.navigate('TournamentBracket')
+        }
+      ]
+    );
+  };
+
+  return (
+    <ScrollView style={styles.container}>
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Tournament Name</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Enter tournament name"
+          value={tournamentName}
+          onChangeText={setTournamentName}
+          maxLength={50}
+        />
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Tournament Format</Text>
+        {tournamentFormats.map(format => (
+          <TouchableOpacity
+            key={format.id}
+            style={[
+              styles.optionCard,
+              selectedFormat === format.id && styles.selectedOption
+            ]}
+            onPress={() => setSelectedFormat(format.id)}
+          >
+            <Text style={[
+              styles.optionTitle,
+              selectedFormat === format.id && styles.selectedOptionText
+            ]}>
+              {format.name}
+            </Text>
+            <Text style={[
+              styles.optionDescription,
+              selectedFormat === format.id && styles.selectedOptionDescription
+            ]}>
+              {format.description}
+            </Text>
+            <Text style={[
+              styles.minPlayers,
+              selectedFormat === format.id && styles.selectedOptionDescription
+            ]}>
+              Min. {format.minPlayers} players
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Match Format</Text>
+        <View style={styles.matchFormatContainer}>
+          {matchFormats.map(format => (
+            <TouchableOpacity
+              key={format.id}
+              style={[
+                styles.matchFormatButton,
+                selectedMatchFormat === format.id && styles.selectedMatchFormat
+              ]}
+              onPress={() => setSelectedMatchFormat(format.id)}
+            >
+              <Text style={[
+                styles.matchFormatText,
+                selectedMatchFormat === format.id && styles.selectedMatchFormatText
+              ]}>
+                {format.name}
+              </Text>
+              <Text style={[
+                styles.matchFormatDesc,
+                selectedMatchFormat === format.id && styles.selectedMatchFormatDesc
+              ]}>
+                {format.description}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>
+          Select Players ({selectedPlayers.length}/{players.length})
+        </Text>
+        {players.map(player => (
+          <TouchableOpacity
+            key={player.id}
+            style={[
+              styles.playerCard,
+              selectedPlayers.find(p => p.id === player.id) && styles.selectedPlayer
+            ]}
+            onPress={() => togglePlayerSelection(player)}
+          >
+            <View style={styles.playerInfo}>
+              <Text style={[
+                styles.playerName,
+                selectedPlayers.find(p => p.id === player.id) && styles.selectedPlayerText
+              ]}>
+                {player.name}
+              </Text>
+              {player.tag && (
+                <Text style={[
+                  styles.playerTag,
+                  selectedPlayers.find(p => p.id === player.id) && styles.selectedPlayerTag
+                ]}>
+                  #{player.tag}
+                </Text>
+              )}
+            </View>
+            <View style={styles.playerStats}>
+              <Text style={[
+                styles.statText,
+                selectedPlayers.find(p => p.id === player.id) && styles.selectedPlayerText
+              ]}>
+                {player.wins}W - {player.losses}L
+              </Text>
+            </View>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      <TouchableOpacity
+        style={[
+          styles.createButton,
+          (!tournamentName.trim() || selectedPlayers.length < 2) && styles.disabledButton
+        ]}
+        onPress={handleCreateTournament}
+        disabled={!tournamentName.trim() || selectedPlayers.length < 2}
+      >
+        <Text style={styles.createButtonText}>Create Tournament</Text>
+      </TouchableOpacity>
+    </ScrollView>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f5f5f5',
+  },
+  section: {
+    margin: 20,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 10,
+  },
+  input: {
+    backgroundColor: 'white',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 10,
+    padding: 15,
+    fontSize: 16,
+  },
+  optionCard: {
+    backgroundColor: 'white',
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 10,
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  selectedOption: {
+    borderColor: '#1976D2',
+    backgroundColor: '#E3F2FD',
+  },
+  optionTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  selectedOptionText: {
+    color: '#1976D2',
+  },
+  optionDescription: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 5,
+  },
+  selectedOptionDescription: {
+    color: '#1976D2',
+  },
+  minPlayers: {
+    fontSize: 12,
+    color: '#999',
+    marginTop: 5,
+  },
+  matchFormatContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  matchFormatButton: {
+    flex: 1,
+    backgroundColor: 'white',
+    padding: 15,
+    borderRadius: 10,
+    marginHorizontal: 5,
+    borderWidth: 2,
+    borderColor: 'transparent',
+    alignItems: 'center',
+  },
+  selectedMatchFormat: {
+    borderColor: '#1976D2',
+    backgroundColor: '#E3F2FD',
+  },
+  matchFormatText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  selectedMatchFormatText: {
+    color: '#1976D2',
+  },
+  matchFormatDesc: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 5,
+  },
+  selectedMatchFormatDesc: {
+    color: '#1976D2',
+  },
+  playerCard: {
+    backgroundColor: 'white',
+    padding: 15,
+    marginBottom: 10,
+    borderRadius: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  selectedPlayer: {
+    borderColor: '#4CAF50',
+    backgroundColor: '#E8F5E8',
+  },
+  playerInfo: {
+    flex: 1,
+  },
+  playerName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  selectedPlayerText: {
+    color: '#4CAF50',
+  },
+  playerTag: {
+    fontSize: 14,
+    color: '#666',
+  },
+  selectedPlayerTag: {
+    color: '#4CAF50',
+  },
+  playerStats: {
+    alignItems: 'flex-end',
+  },
+  statText: {
+    fontSize: 14,
+    color: '#666',
+  },
+  createButton: {
+    backgroundColor: '#1976D2',
+    margin: 20,
+    padding: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  disabledButton: {
+    backgroundColor: '#ccc',
+  },
+  createButtonText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+});
+
+export default TournamentCreationScreen;
