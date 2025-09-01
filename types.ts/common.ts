@@ -22,8 +22,8 @@ export type TournamentType = {
   name: string;
   format: TOURNAMENT_FORMATS;
   matchFormat?: string;
-  players: string[];
-  matches: string[];
+  teams: string[];
+  // matches: string[];
   bracket: Bracket;
   status: MATCH_STATUS;
   currentRound: number;
