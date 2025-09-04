@@ -21,14 +21,15 @@ export type TournamentType = {
   id: string;
   name: string;
   format: TOURNAMENT_FORMATS;
-  matchFormat?: string;
+  sets?: number;
   teams: string[];
-  // matches: string[];
-  bracket: Bracket;
+  bracket: MatchType[];
   status: MATCH_STATUS;
+  pointsPerMatch: number;
+  tieBreakerPoints?: number;
   currentRound: number;
   createdAt: string;
-  completedAt: string | null;
+  completedAt: string;
 };
 
 export type MatchType = {
@@ -43,19 +44,15 @@ export type MatchType = {
   position: number;
 };
 
-export type Bracket = {
-  [round: number]: MatchType[];
-};
-
 export enum TOURNAMENT_FORMATS {
-  SINGLE_ELIM = "single_elim",
-  DOUBLE_ELIM = "double_elim",
-  ROUND_ROBIN = "round_robin",
-  SWISS = "swiss",
+  SINGLE_ELIM = "Single Elimination",
+  DOUBLE_ELIM = "Double Elimination",
+  ROUND_ROBIN = "Round Robin",
+  SWISS = "Swiss System",
 }
 
 export enum MATCH_STATUS {
-  PENDING = "pending",
-  ONGOING = "ongoing",
-  COMPLETED = "completed",
+  PENDING = "Pending",
+  ONGOING = "Ongoing",
+  COMPLETED = "Completed",
 }

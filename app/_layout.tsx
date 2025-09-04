@@ -1,5 +1,7 @@
+import { initDB } from "@/services/databaseService";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Stack, useRouter, useSegments } from "expo-router";
+import { SQLiteProvider } from "expo-sqlite";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
@@ -11,12 +13,13 @@ export default function RootLayout() {
 
   useEffect(() => {
     const restoreNav = async () => {
-      const savedState = await AsyncStorage.getItem("lastRoute");
+      const savedState: any = await AsyncStorage.getItem("lastRoute");
       if (savedState) {
         router.replace(savedState);
       }
     };
-    restoreNav();
+    // restoreNav();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -28,10 +31,10 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <SafeAreaView style={{ flex: 1, backgroundColor: "#eaeaea" }} edges={["top"]}>
-        {/* <SQLiteProvider databaseName="SmashScore.db" onInit={initDB}> */}
-        <StatusBar style="dark" />
-        <Stack screenOptions={{ headerShown: false }} />
-        {/* </SQLiteProvider> */}
+        <SQLiteProvider databaseName="SmashScore.db" onInit={initDB}>
+          <StatusBar style="dark" />
+          <Stack screenOptions={{ headerShown: false }} />
+        </SQLiteProvider>
       </SafeAreaView>
     </SafeAreaProvider>
   );

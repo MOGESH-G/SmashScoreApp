@@ -73,23 +73,25 @@ export const generateDoubleElimination = (teams: string[], tournamentId: string)
   };
 };
 
-export const generateRoundRobin = (teams: string[], tournamentId: string) => {
+export const generateRoundRobin = (teams: string[], tournamentId: string, setCount = 1) => {
   const matches: MatchType[] = [];
   let matchNumber = 1;
 
   for (let i = 0; i < teams.length; i++) {
     for (let j = i + 1; j < teams.length; j++) {
-      matches.push({
-        id: generateUUID(),
-        tournamentId: tournamentId,
-        position: matchNumber++,
-        team1: teams[i],
-        team2: teams[j],
-        team1Score: 0,
-        team2Score: 0,
-        winner: null,
-        status: MATCH_STATUS.PENDING,
-      });
+      for (let set = 1; set <= setCount; set++) {
+        matches.push({
+          id: generateUUID(),
+          tournamentId: tournamentId,
+          position: matchNumber++,
+          team1: teams[i],
+          team2: teams[j],
+          team1Score: 0,
+          team2Score: 0,
+          winner: null,
+          status: MATCH_STATUS.PENDING,
+        });
+      }
     }
   }
 

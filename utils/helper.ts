@@ -1,7 +1,7 @@
-import { v4 as uuidv4 } from "uuid";
+import uuid from "react-native-uuid";
 
 export const generateUUID = () => {
-  return uuidv4();
+  return uuid.v4().toString();
 };
 
 export const formatDate = (dateString: string) => {
