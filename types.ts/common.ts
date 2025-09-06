@@ -10,11 +10,7 @@ export type PlayerType = {
 export type TeamType = {
   id: string;
   name: string;
-  tournamentId: string;
-  wins: number;
-  losses: number;
-  players: string[];
-  createdAt: string;
+  players: PlayerType[];
 };
 
 export type TournamentType = {
@@ -22,7 +18,8 @@ export type TournamentType = {
   name: string;
   format: TOURNAMENT_FORMATS;
   sets?: number;
-  teams: string[];
+  mode: TOURNAMENT_MODE;
+  teams: TeamType[];
   bracket: MatchType[];
   status: MATCH_STATUS;
   pointsPerMatch: number;
@@ -55,4 +52,9 @@ export enum MATCH_STATUS {
   PENDING = "Pending",
   ONGOING = "Ongoing",
   COMPLETED = "Completed",
+}
+
+export enum TOURNAMENT_MODE {
+  SINGLES = "Singles",
+  DOUBLES = "Doubles",
 }

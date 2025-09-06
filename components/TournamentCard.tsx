@@ -7,9 +7,9 @@ const TournamentCard = ({ data }: { data: ListRenderItemInfo<TournamentType> }) 
   const item: TournamentType = data.item;
   const router = useRouter();
   const handleTournament = () => {
-    if (item.teams?.length === 0) {
-      router.push(`/tournaments/${item.id}/Teams`);
-    }
+    // if (item.teams?.length === 0) {
+    router.push(`/tournaments/${item.id}/Teams`);
+    // }
   };
 
   return (

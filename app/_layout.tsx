@@ -4,6 +4,7 @@ import { Stack, useRouter, useSegments } from "expo-router";
 import { SQLiteProvider } from "expo-sqlite";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import "./globals.css";
 
@@ -29,13 +30,15 @@ export default function RootLayout() {
   }, [segments]);
 
   return (
-    <SafeAreaProvider>
-      <SafeAreaView style={{ flex: 1, backgroundColor: "#eaeaea" }} edges={["top"]}>
-        <SQLiteProvider databaseName="SmashScore.db" onInit={initDB}>
-          <StatusBar style="dark" />
-          <Stack screenOptions={{ headerShown: false }} />
-        </SQLiteProvider>
-      </SafeAreaView>
-    </SafeAreaProvider>
+    <GestureHandlerRootView>
+      <SafeAreaProvider>
+        <SafeAreaView style={{ flex: 1, backgroundColor: "#eaeaea" }} edges={["top", "bottom"]}>
+          <SQLiteProvider databaseName="SmashScore.db" onInit={initDB}>
+            <StatusBar style="dark" />
+            <Stack screenOptions={{ headerShown: false }} />
+          </SQLiteProvider>
+        </SafeAreaView>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }

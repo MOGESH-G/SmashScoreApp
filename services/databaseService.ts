@@ -105,7 +105,7 @@
 //   }
 // };
 
-import { MatchType, PlayerType, TeamType, TournamentType } from "@/types.ts/common";
+import { MatchType, PlayerType, TournamentType } from "@/types.ts/common";
 import * as SQLite from "expo-sqlite";
 
 let db: SQLite.SQLiteDatabase | null = null;
@@ -139,6 +139,7 @@ export const initDB = async () => {
             name TEXT NOT NULL,
             format TEXT NOT NULL,
             sets INTEGER DEFAULT 0,
+            mode TEXT NOT NULL,
             teams TEXT DEFAULT NULL,
             bracket TEXT NOT NULL,
             status TEXT NOT NULL,
@@ -149,32 +150,16 @@ export const initDB = async () => {
             completedAt TEXT
           );
 
-          CREATE TABLE IF NOT EXISTS teams (
-            id TEXT PRIMARY KEY NOT NULL,
-            name TEXT NOT NULL,
-            tournamentId TEXT NOT NULL,
-            wins INTEGER DEFAULT 0,
-            losses INTEGER DEFAULT 0,
-            players TEXT NOT NULL,
-            createdAt TEXT NOT NULL,
-            FOREIGN KEY (tournamentId) REFERENCES tournaments(id) ON DELETE NO ACTION
-          );
-
           CREATE TABLE IF NOT EXISTS matches (
             id TEXT PRIMARY KEY NOT NULL,
-            tournamentId TEXT NOT NULL,
             team1 TEXT,
             team2 TEXT,
             team1Score INTEGER DEFAULT 0,
             team2Score INTEGER DEFAULT 0,
             winner TEXT,
             status TEXT NOT NULL,
-            position INTEGER NOT NULL,
-            FOREIGN KEY (tournamentId) REFERENCES tournaments(id) ON DELETE NO ACTION
+            position INTEGER NOT NULL
           );
-
-          CREATE INDEX IF NOT EXISTS idx_matches_tournamentId ON matches (tournamentId);
-          CREATE INDEX IF NOT EXISTS idx_teams_tournamentId ON teams (tournamentId);
 
           PRAGMA user_version = ${DATABASE_VERSION};
           `);
@@ -243,33 +228,7 @@ export const updatePlayer = async (id: string, key: string, value: string | numb
   runQuery(`UPDATE players SET ${key} = ? WHERE id = ?;`, [value, id]);
 export const deletePlayer = async (id: string) =>
   runQuery(`DELETE FROM players WHERE id = ?;`, [id]);
-
-/** TEAM OPERATIONS **/
-export const getTeams = async () => {
-  const data = await queryAll<TeamType>("SELECT * FROM teams;");
-  return data.map((t) => ({ ...t, players: JSON.parse(t.players as any) || [] }));
-};
-export const getTeamById = async (id: string) => {
-  const team = await queryOne<TeamType>("SELECT * FROM teams WHERE id = ?;", [id]);
-  if (team && team.players) team.players = JSON.parse(team.players as any) || [];
-  return team;
-};
-export const createTeam = async (team: TeamType) =>
-  runQuery(
-    `INSERT INTO teams (id, name, tournamentId, wins, losses, players, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    [
-      team.id,
-      team.name,
-      team.tournamentId,
-      team.wins,
-      team.losses,
-      JSON.stringify(team.players),
-      team.createdAt,
-    ]
-  );
-export const updateTeam = async (id: string, key: string, value: string | number) =>
-  runQuery(`UPDATE teams SET ${key} = ? WHERE id = ?;`, [value, id]);
-export const deleteTeam = async (id: string) => runQuery(`DELETE FROM teams WHERE id = ?;`, [id]);
+export const emptyPlayers = async () => runQuery("DELETE FROM players");
 
 /** MATCH OPERATIONS **/
 export const getMatches = async () => queryAll<MatchType>("SELECT * FROM matches;");
@@ -277,8 +236,8 @@ export const getMatchById = async (id: string) =>
   queryOne<MatchType>("SELECT * FROM matches WHERE id = ?;", [id]);
 export const createMatch = async (m: MatchType) =>
   runQuery(
-    `INSERT INTO matches (id, tournamentId, team1, team2, team1Score, team2Score, winner, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-    [m.id, m.tournamentId, m.team1, m.team2, m.team1Score, m.team2Score, m.winner, m.status]
+    `INSERT INTO matches (id, team1, team2, team1Score, team2Score, winner, status) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    [m.id, m.team1, m.team2, m.team1Score, m.team2Score, m.winner, m.status]
   );
 
 /** TOURNAMENT OPERATIONS **/
@@ -302,12 +261,13 @@ export const getTournamentById = async (id: string) => {
 };
 export const createTournament = async (t: TournamentType) =>
   runQuery(
-    `INSERT INTO tournaments (id, name, format, sets, teams, bracket, status, pointsPerMatch, tieBreakerPoints, currentRound, createdAt, completedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO tournaments (id, name, format, sets, mode, teams, bracket, status, pointsPerMatch, tieBreakerPoints, currentRound, createdAt, completedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       t.id,
       t.name,
       t.format,
       t.sets || 0,
+      t.mode,
       JSON.stringify(t.teams),
       JSON.stringify(t.bracket),
       t.status,
@@ -318,7 +278,26 @@ export const createTournament = async (t: TournamentType) =>
       t.completedAt,
     ]
   );
-export const updateTournament = async (id: string, key: string, value: string | number) =>
+export const patchTournament = async (id: string, key: string, value: string | number) =>
   runQuery(`UPDATE tournaments SET ${key} = ? WHERE id = ?;`, [value, id]);
+export const updateTournament = async (t: TournamentType) =>
+  runQuery(
+    `UPDATE tournaments SET name = ?, format = ?, sets = ?, mode = ?, teams = ?, bracket = ?, status = ?, pointsPerMatch = ?, tieBreakerPoints = ?, currentRound = ?, createdAt = ?, completedAt = ? WHERE id = ?`,
+    [
+      t.name,
+      t.format,
+      t.sets || 0,
+      t.mode,
+      JSON.stringify(t.teams),
+      JSON.stringify(t.bracket),
+      t.status,
+      t.pointsPerMatch,
+      t.tieBreakerPoints || 0,
+      t.currentRound,
+      t.createdAt,
+      t.completedAt,
+      t.id,
+    ]
+  );
 export const deleteTournament = async (id: string) =>
   runQuery(`DELETE FROM tournaments WHERE id = ?;`, [id]);

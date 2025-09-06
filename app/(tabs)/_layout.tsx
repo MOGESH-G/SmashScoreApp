@@ -8,7 +8,8 @@ export default function TabLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          height: 70,
+          height: "auto",
+          maxHeight: 80,
           backgroundColor: "#1a1a1a",
           borderTopLeftRadius: 20,
           borderTopRightRadius: 20,
@@ -17,14 +18,12 @@ export default function TabLayout() {
           bottom: 0,
           left: 0,
           right: 0,
-          elevation: 10,
         },
         tabBarActiveTintColor: "#eaeaea",
         tabBarInactiveTintColor: "#9ca3af",
         tabBarLabelStyle: {
           fontSize: 12,
           fontWeight: "600",
-          marginBottom: 4,
         },
       }}
     >

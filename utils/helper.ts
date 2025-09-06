@@ -37,3 +37,33 @@ export const validateTournamentName = (name: string) => {
 export const validatePlayerName = (name: string) => {
   return name && name.trim().length >= 2 && name.trim().length <= 30;
 };
+
+export const createTeams = (playerIds: string[], mode = "singles") => {
+  if (!Array.isArray(playerIds)) {
+    throw new Error("playerIds must be an array");
+  }
+
+  const shuffled = [...playerIds];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+
+  if (mode === "singles") {
+    return shuffled.map((id) => [id]);
+  }
+
+  if (mode === "doubles") {
+    const teams = [];
+    for (let i = 0; i < shuffled.length; i += 2) {
+      const team = [shuffled[i]];
+      if (i + 1 < shuffled.length) {
+        team.push(shuffled[i + 1]);
+      }
+      teams.push(team);
+    }
+    return teams;
+  }
+
+  throw new Error("Invalid mode. Choose 'singles' or 'doubles'.");
+};

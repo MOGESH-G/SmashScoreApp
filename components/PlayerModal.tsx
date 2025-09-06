@@ -1,7 +1,8 @@
-import { createPlayer, getPlayerById } from "@/services/databaseService";
+import { createPlayer, getPlayerById, updatePlayer } from "@/services/databaseService";
 import { PlayerType } from "@/types.ts/common";
 import { generateUUID } from "@/utils/helper";
-import React, { useEffect, useState } from "react";
+import { useFocusEffect } from "expo-router";
+import React, { useState } from "react";
 import { Modal, Pressable, Text, TextInput, View } from "react-native";
 import CustomButton from "./CustomButton";
 
@@ -19,7 +20,7 @@ const initialPlayerData: PlayerType = {
   createdAt: "",
 };
 
-const PlalyerModal = ({ id, openModal, setOpenModal }: playerModalType) => {
+const PlayerModal = ({ id, openModal, setOpenModal }: playerModalType) => {
   const [player, setPlayer] = useState<PlayerType>(initialPlayerData);
 
   const fetchPlayer = async (id: string) => {
@@ -29,12 +30,11 @@ const PlalyerModal = ({ id, openModal, setOpenModal }: playerModalType) => {
     }
   };
 
-  useEffect(() => {
-    if (id) {
+  useFocusEffect(() => {
+    if (id && !player.id) {
       fetchPlayer(id);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  });
 
   const handleValueChange = (key: string, value: any) => {
     setPlayer((prev) => ({
@@ -47,10 +47,15 @@ const PlalyerModal = ({ id, openModal, setOpenModal }: playerModalType) => {
     try {
       const data = player;
       data.id = generateUUID();
-      await createPlayer(data);
+      if (id) {
+        await updatePlayer(id, "name", data.name);
+      } else {
+        await createPlayer(data);
+      }
     } catch (error) {
       console.log(error);
     } finally {
+      setPlayer(initialPlayerData);
       setOpenModal(false);
     }
   };
@@ -64,12 +69,10 @@ const PlalyerModal = ({ id, openModal, setOpenModal }: playerModalType) => {
           onPress={() => setOpenModal(false)}
         >
           <View className="bg-white w-4/5 p-5 gap-3 rounded-2xl">
-            {/* <View className="w-full">
-              <Text>Add Player</Text>
-            </View> */}
             <View className="gap-1">
               <Text className="font-semibold text-lg">Player Name</Text>
               <TextInput
+                autoFocus
                 value={player.name}
                 onChangeText={(text) => handleValueChange("name", text)}
                 className="border rounded-lg p-2 bg-white h-14"
@@ -81,7 +84,7 @@ const PlalyerModal = ({ id, openModal, setOpenModal }: playerModalType) => {
               disabled={player.name === ""}
               className="bg-green py-2 rounded-xl px-2 "
               onPress={createNewPlayer}
-              label="Create"
+              label={id ? "Update" : "Create"}
             />
           </View>
         </Pressable>
@@ -90,4 +93,4 @@ const PlalyerModal = ({ id, openModal, setOpenModal }: playerModalType) => {
   );
 };
 
-export default PlalyerModal;
+export default PlayerModal;

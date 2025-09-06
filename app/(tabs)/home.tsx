@@ -4,7 +4,7 @@ import { TournamentType } from "@/types.ts/common";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useState } from "react";
-import { FlatList, Pressable, Text, View } from "react-native";
+import { Button, FlatList, Pressable, Text, View } from "react-native";
 
 const Home = () => {
   const router = useRouter();
@@ -38,6 +38,7 @@ const Home = () => {
           </View>
         </View>
       </View>
+      <Button title="playes" onPress={() => router.push("/Players")} />
 
       <View className="flex-1 w-full mb-20">
         <Text className="font-semibold text-lg">Recent Tournaments</Text>

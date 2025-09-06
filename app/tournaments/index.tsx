@@ -1,7 +1,12 @@
 import CustomRadioButton from "@/components/CustomRadioButton";
 import CustomSegments from "@/components/CustomSegments";
 import { createTournament } from "@/services/databaseService";
-import { MATCH_STATUS, TOURNAMENT_FORMATS, TournamentType } from "@/types.ts/common";
+import {
+  MATCH_STATUS,
+  TOURNAMENT_FORMATS,
+  TOURNAMENT_MODE,
+  TournamentType,
+} from "@/types.ts/common";
 import { generateUUID } from "@/utils/helper";
 import { AntDesign } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -23,6 +28,7 @@ const initialTournamentData: TournamentType = {
   name: "",
   format: TOURNAMENT_FORMATS.SINGLE_ELIM,
   sets: 0,
+  mode: TOURNAMENT_MODE.SINGLES,
   teams: [],
   pointsPerMatch: 21,
   tieBreakerPoints: 0,
@@ -37,6 +43,7 @@ const Index = () => {
   const router = useRouter();
   const [tournamentData, setTournamentData] = useState<TournamentType>(initialTournamentData);
   const Formats = Object.values(TOURNAMENT_FORMATS);
+  const Disciplines = Object.values(TOURNAMENT_MODE);
   const [disabled, setDisabled] = useState(true);
 
   const handleValueChange = (key: string, value: any) => {
@@ -102,6 +109,24 @@ const Index = () => {
                   className="border rounded-lg p-2 bg-white h-14"
                   placeholder={`Enter tournament name `}
                 />
+              </View>
+
+              <View className="gap-1">
+                <Text className="font-semibold text-lg">Discipline</Text>
+                <View className="gap-2">
+                  {Disciplines.map((mode) => (
+                    <CustomRadioButton
+                      key={mode}
+                      label={mode}
+                      size={23}
+                      labelClass="text-lg"
+                      checked={tournamentData?.mode === mode || false}
+                      onPress={() => {
+                        handleValueChange("mode", mode);
+                      }}
+                    />
+                  ))}
+                </View>
               </View>
 
               <View className="gap-1">
