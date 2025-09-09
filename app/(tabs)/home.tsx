@@ -40,7 +40,7 @@ const Home = () => {
       </View>
       <Button title="playes" onPress={() => router.push("/Players")} />
 
-      <View className="flex-1 w-full mb-20">
+      <View className="flex-1 w-full mb-8">
         <Text className="font-semibold text-lg">Recent Tournaments</Text>
         <FlatList
           data={tournaments}
@@ -49,6 +49,7 @@ const Home = () => {
             padding: 3,
           }}
           overScrollMode="always"
+          showsVerticalScrollIndicator={false}
           keyExtractor={(item) => item.id.toString()}
           ItemSeparatorComponent={() => <View style={{ height: 10 }}></View>}
           renderItem={(data) => <TournamentCard data={data} />}

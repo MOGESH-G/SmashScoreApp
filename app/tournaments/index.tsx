@@ -1,6 +1,6 @@
 import CustomRadioButton from "@/components/CustomRadioButton";
 import CustomSegments from "@/components/CustomSegments";
-import { createTournament } from "@/services/databaseService";
+import { createTournament, getTournamentById, updateTournament } from "@/services/databaseService";
 import {
   MATCH_STATUS,
   TOURNAMENT_FORMATS,
@@ -9,7 +9,7 @@ import {
 } from "@/types.ts/common";
 import { generateUUID } from "@/utils/helper";
 import { AntDesign } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   Keyboard,
@@ -24,7 +24,7 @@ import {
 } from "react-native";
 
 const initialTournamentData: TournamentType = {
-  id: generateUUID(),
+  id: "",
   name: "",
   format: TOURNAMENT_FORMATS.SINGLE_ELIM,
   sets: 0,
@@ -41,6 +41,7 @@ const initialTournamentData: TournamentType = {
 
 const Index = () => {
   const router = useRouter();
+  const { id } = useLocalSearchParams();
   const [tournamentData, setTournamentData] = useState<TournamentType>(initialTournamentData);
   const Formats = Object.values(TOURNAMENT_FORMATS);
   const Disciplines = Object.values(TOURNAMENT_MODE);
@@ -52,6 +53,18 @@ const Index = () => {
       [key]: value,
     }));
   };
+
+  const fetchTournament = async (id: string) => {
+    const data = await getTournamentById(id);
+    console.log(data);
+    if (data) setTournamentData(data);
+  };
+
+  useEffect(() => {
+    if (id) {
+      fetchTournament(id as string);
+    }
+  }, [id]);
 
   useEffect(() => {
     if (tournamentData) {
@@ -70,11 +83,20 @@ const Index = () => {
   }, [tournamentData]);
 
   const createNewTournament = async () => {
-    console.log(tournamentData);
-    const result = await createTournament(tournamentData);
-    if (result?.lastInsertRowId) {
-      console.log("first");
-      router.push(`/tournaments/${result.lastInsertRowId}/Teams`);
+    if (id) {
+      console.log(tournamentData.sets);
+      await updateTournament(tournamentData);
+      setTournamentData(initialTournamentData);
+      router.push(`/tournaments/${tournamentData.id}/Teams`);
+    } else {
+      const data = {
+        ...tournamentData,
+        id: generateUUID(),
+      };
+      const result = await createTournament(data);
+      if (result?.lastInsertRowId) {
+        router.push(`/tournaments/${result.lastInsertRowId}/Teams`);
+      }
     }
   };
 
@@ -154,7 +176,7 @@ const Index = () => {
                     options={[1, 2, 3, 5]}
                     containerRadius={50}
                     sliderRadius={0}
-                    onPress={(value) => handleValueChange("match_format", value)}
+                    onPress={(value) => handleValueChange("sets", value)}
                   />
                 </View>
               )}

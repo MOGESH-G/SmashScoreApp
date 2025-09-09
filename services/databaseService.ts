@@ -278,8 +278,12 @@ export const createTournament = async (t: TournamentType) =>
       t.completedAt,
     ]
   );
-export const patchTournament = async (id: string, key: string, value: string | number) =>
-  runQuery(`UPDATE tournaments SET ${key} = ? WHERE id = ?;`, [value, id]);
+export const patchTournament = async (
+  id: string,
+  key: keyof TournamentType,
+  value: string | number
+) => runQuery(`UPDATE tournaments SET ${key} = ? WHERE id = ?;`, [value, id]);
+
 export const updateTournament = async (t: TournamentType) =>
   runQuery(
     `UPDATE tournaments SET name = ?, format = ?, sets = ?, mode = ?, teams = ?, bracket = ?, status = ?, pointsPerMatch = ?, tieBreakerPoints = ?, currentRound = ?, createdAt = ?, completedAt = ? WHERE id = ?`,
@@ -301,3 +305,5 @@ export const updateTournament = async (t: TournamentType) =>
   );
 export const deleteTournament = async (id: string) =>
   runQuery(`DELETE FROM tournaments WHERE id = ?;`, [id]);
+
+export const emptyTournaments = async () => runQuery("DELETE FROM tournaments");
