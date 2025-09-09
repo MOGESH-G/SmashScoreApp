@@ -1,4 +1,5 @@
 import { TournamentType } from "@/types.ts/common";
+import { AntDesign } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React from "react";
 import { ListRenderItemInfo, Text, TouchableOpacity, View } from "react-native";
@@ -7,9 +8,7 @@ const TournamentCard = ({ data }: { data: ListRenderItemInfo<TournamentType> }) 
   const item: TournamentType = data.item;
   const router = useRouter();
   const handleTournament = () => {
-    // if (item.teams?.length === 0) {
     router.push(`/tournaments/${item.id}/Teams`);
-    // }
   };
 
   return (
@@ -19,6 +18,11 @@ const TournamentCard = ({ data }: { data: ListRenderItemInfo<TournamentType> }) 
         <Text className="py-2 px-4 rounded-full self-start" onPress={() => console.log("text")}>
           {item.status}
         </Text>
+        <AntDesign
+          name="edit"
+          size={24}
+          onPress={() => router.push(`/tournaments?id=${item.id}`)}
+        />
       </View>
     </TouchableOpacity>
   );

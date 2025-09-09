@@ -11,6 +11,8 @@ export type TeamType = {
   id: string;
   name: string;
   players: PlayerType[];
+  wins: 0;
+  losses: 0;
 };
 
 export type TournamentType = {
@@ -32,8 +34,8 @@ export type TournamentType = {
 export type MatchType = {
   id: string;
   tournamentId: string;
-  team1: string | null;
-  team2: string | null;
+  team1: TeamType | null;
+  team2: TeamType | null;
   team1Score: 0;
   team2Score: 0;
   winner: string | null;

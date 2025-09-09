@@ -5,8 +5,8 @@ import PlayerModal from "@/components/PlayerModal";
 import { deletePlayer, getPlayers } from "@/services/databaseService";
 import { PlayerType } from "@/types.ts/common";
 import { AntDesign, MaterialIcons } from "@expo/vector-icons";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import React, { useCallback, useEffect, useState } from "react";
 import { FlatList, Pressable, Text, View } from "react-native";
 
 const Players = () => {
@@ -25,13 +25,15 @@ const Players = () => {
     setLoading(false);
   };
 
+  useFocusEffect(
+    useCallback(() => {
+      fetchPlayers();
+    }, [])
+  );
+
   useEffect(() => {
     if (!playerModalOpen) fetchPlayers();
   }, [playerModalOpen]);
-
-  if (loading) {
-    return <CustomLoader />;
-  }
 
   const handleDelete = async (id: string) => {
     if (deleteId === id) {
@@ -76,6 +78,10 @@ const Players = () => {
     );
   };
 
+  if (loading) {
+    return <CustomLoader />;
+  }
+
   return (
     <View className="flex-1 w-full">
       <View className="w-full flex-row bg-secondary h-[5rem] items-center justify-between pl-3 pr-8 gap-3">
@@ -100,17 +106,20 @@ const Players = () => {
             data={players}
             keyExtractor={(item) => item.id}
             className="w-full flex-1"
-            ItemSeparatorComponent={() => <View className="h-2"></View>}
+            ItemSeparatorComponent={() => <View className="h-1"></View>}
             renderItem={({ item }) => <PlayersList item={item} />}
           />
         )}
       </View>
-      <CustomSnackbar
-        visible={snackBarVisible}
-        onDismiss={() => setSnackBarVisible(false)}
-        message={`Press again to delete (${players.find((pl) => pl.id === deleteId)?.name})`}
-      />
-      <PlayerModal openModal={playerModalOpen} setOpenModal={setPlayerModalOpen} id={playerId} />
+
+      <View className="absolute bottom-0 w-full">
+        <CustomSnackbar
+          visible={snackBarVisible}
+          onDismiss={() => setSnackBarVisible(false)}
+          message={`Press again to delete (${players.find((pl) => pl.id === deleteId)?.name})`}
+        />
+        <PlayerModal openModal={playerModalOpen} setOpenModal={setPlayerModalOpen} id={playerId} />
+      </View>
     </View>
   );
 };

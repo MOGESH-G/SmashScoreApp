@@ -5,6 +5,7 @@ type Props = {
   visible: boolean;
   message: string;
   onDismiss: () => void;
+  className?: string;
   duration?: number;
   actionLabel?: string;
   onAction?: () => void;
@@ -14,6 +15,7 @@ export default function CustomSnackbar({
   visible,
   message,
   onDismiss,
+  className = "",
   duration = 3000,
   actionLabel,
   onAction,

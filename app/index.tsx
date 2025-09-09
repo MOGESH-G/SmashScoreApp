@@ -1,4 +1,4 @@
-import { emptyPlayers, initDB, resetDB } from "@/services/databaseService";
+import { emptyPlayers, emptyTournaments, initDB, resetDB } from "@/services/databaseService";
 import { useRouter } from "expo-router";
 import { Button, View } from "react-native";
 
@@ -10,6 +10,7 @@ export default function Index() {
       <Button title="Reset" onPress={resetDB} />
       <Button title="Init" onPress={initDB} />
       <Button title="Delete Players" onPress={emptyPlayers} />
+      <Button title="Delete Tournaments" onPress={emptyTournaments} />
     </View>
   );
 }
