@@ -12,9 +12,10 @@ module.exports = {
         active: "#170A1C",
         inactive: "#9ca3af",
         green: "#4ade80",
+        winner: "#8FF7A7",
+        loser: "#FF4D4D",
       },
     },
   },
   plugins: [],
 };
-

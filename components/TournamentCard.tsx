@@ -1,14 +1,21 @@
+import { deleteTournament } from "@/services/databaseService";
 import { TournamentType } from "@/types.ts/common";
 import { AntDesign } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React from "react";
 import { ListRenderItemInfo, Text, TouchableOpacity, View } from "react-native";
 
-const TournamentCard = ({ data }: { data: ListRenderItemInfo<TournamentType> }) => {
+const TournamentCard = ({
+  data,
+  fetchTournaments,
+}: {
+  data: ListRenderItemInfo<TournamentType>;
+  fetchTournaments: () => void;
+}) => {
   const item: TournamentType = data.item;
   const router = useRouter();
   const handleTournament = () => {
-    router.push(`/tournaments/${item.id}/Teams`);
+    router.push(`/tournaments/${item.id}/Matches`);
   };
 
   return (
@@ -22,6 +29,14 @@ const TournamentCard = ({ data }: { data: ListRenderItemInfo<TournamentType> }) 
           name="edit"
           size={24}
           onPress={() => router.push(`/tournaments?id=${item.id}`)}
+        />
+        <AntDesign
+          name="delete"
+          size={24}
+          onPress={() => {
+            deleteTournament(item.id);
+            fetchTournaments();
+          }}
         />
       </View>
     </TouchableOpacity>

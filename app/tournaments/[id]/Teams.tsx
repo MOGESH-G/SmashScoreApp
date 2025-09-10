@@ -24,6 +24,7 @@ const Teams = () => {
   const [tournamentData, setTournamentData] = useState<TournamentType | null>(null);
   const [players, setPlayers] = useState<PlayerType[]>([]);
   const [newTeam, setNewTeam] = useState<TeamType>(initialTeamType);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [teamId, setTeamId] = useState("");
   const [teamSheetOpen, setTeamSheetOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -33,18 +34,22 @@ const Teams = () => {
   const fetchPlayers = async () => {
     const data: PlayerType[] = await getPlayers();
     setPlayers(data);
-    setLoading(false);
   };
 
   const fetchTournament = async () => {
     const data: TournamentType | null = await getTournamentById(id.toString());
     if (data) setTournamentData(data);
+    setLoading(false);
   };
 
   useFocusEffect(
     useCallback(() => {
-      fetchTournament();
-      fetchPlayers();
+      const fetchData = async () => {
+        setLoading(true);
+        await Promise.all([fetchTournament(), fetchPlayers()]);
+        setLoading(false);
+      };
+      fetchData();
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
   );
@@ -83,10 +88,6 @@ const Teams = () => {
       [key]: value,
     }));
   };
-
-  if (loading) {
-    return <CustomLoader />;
-  }
 
   const createNewTeam = async () => {
     if (!tournamentData) return;
@@ -142,6 +143,102 @@ const Teams = () => {
     }
   };
 
+  const renderSingles = () => {
+    if (!tournamentData) return;
+
+    if (players.length === 0)
+      return (
+        <View className="flex-1 justify-center items-center h-full">
+          <Pressable onPress={() => router.push("/Players?open=true")}>
+            <AntDesign name="pluscircle" color="black" size={40} />
+          </Pressable>
+          <Text>Oops! No players available</Text>
+        </View>
+      );
+
+    return (
+      <View className="flex-1 w-full p-3">
+        <FlatList
+          data={sortedPlayers}
+          showsVerticalScrollIndicator={false}
+          keyExtractor={(item) => item.id}
+          className="w-full flex-1"
+          ItemSeparatorComponent={() => <View className="h-2" />}
+          renderItem={({ item }) => (
+            <SinlgePlayersList
+              item={item}
+              key={item.id}
+              selectedTeams={tournamentData.teams}
+              setSelectedTeams={handleSinglePlayerSelect}
+            />
+          )}
+        />
+        <TouchableOpacity
+          activeOpacity={0.8}
+          disabled={tournamentData && tournamentData.teams.length === 0}
+          onPress={createNewTeam}
+          className="flex-row py-3 rounded-full justify-center items-center gap-3 bg-primary mt-3"
+        >
+          <Text className="font-semibold text-white">Next</Text>
+          <AntDesign name="arrowright" color="white" size={28} />
+        </TouchableOpacity>
+      </View>
+    );
+  };
+
+  const renderTeams = () => {
+    if (!tournamentData?.teams || tournamentData.teams.length === 0)
+      return (
+        <View className="flex-1 justify-center items-center h-full">
+          <Pressable onPress={() => setTeamSheetOpen(true)}>
+            <AntDesign name="pluscircle" color="black" size={40} />
+          </Pressable>
+          <Text>Add Teams to begin!</Text>
+        </View>
+      );
+
+    return (
+      <View className="flex-1 w-full p-3">
+        <View className="flex flex-row justify-between items-center">
+          <Text className="py-3 px-1 font-semibold">
+            Selected Teams ({tournamentData?.teams.length})
+          </Text>
+          <AntDesign
+            name="pluscircle"
+            color="black"
+            size={30}
+            onPress={() => setTeamSheetOpen(true)}
+          />
+        </View>
+        <FlatList
+          data={tournamentData.teams}
+          showsVerticalScrollIndicator={false}
+          keyExtractor={(item) => item.id}
+          className="w-full flex-1"
+          ItemSeparatorComponent={() => <View className="h-2" />}
+          renderItem={({ item }) => (
+            <TeamsList
+              item={item}
+              key={item.id}
+              players={players}
+              setTeams={handleTeams}
+              tournamentData={tournamentData}
+            />
+          )}
+        />
+        <TouchableOpacity
+          activeOpacity={0.8}
+          disabled={tournamentData.teams.length < 2}
+          onPress={() => router.push(`/tournaments/${tournamentData?.id}/Matches`)}
+          className="flex-row py-3 rounded-full justify-center items-center gap-3 bg-primary mt-3"
+        >
+          <Text className="font-semibold text-white">Next</Text>
+          <AntDesign name="arrowright" color="white" size={28} />
+        </TouchableOpacity>
+      </View>
+    );
+  };
+
   const sortedPlayers = [...players].sort((a, b) => {
     const aInTeam = tournamentData?.teams.some((team) => team.players.some((p) => p.id === a.id));
     const bInTeam = tournamentData?.teams.some((team) => team.players.some((p) => p.id === b.id));
@@ -150,6 +247,10 @@ const Teams = () => {
     if (!aInTeam && bInTeam) return 1;
     return 0;
   });
+
+  if (loading) {
+    return <CustomLoader />;
+  }
 
   return (
     <View className="flex-1 w-full">
@@ -162,7 +263,7 @@ const Teams = () => {
         </Text>
       </View>
 
-      <View className="flex-1 w-full pb-2">
+      {/* <View className="flex-1 w-full pb-2">
         {tournamentData?.mode === TOURNAMENT_MODE.SINGLES ? (
           players.length === 0 ? (
             <View className="flex-1 justify-center items-center h-full">
@@ -250,6 +351,9 @@ const Teams = () => {
             <Text>Add Teams to begin!</Text>
           </View>
         )}
+      </View> */}
+      <View className="flex-1 w-full pb-2">
+        {tournamentData?.mode === TOURNAMENT_MODE.SINGLES ? renderSingles() : renderTeams()}
       </View>
 
       <View className="absolute w-full bottom-0">

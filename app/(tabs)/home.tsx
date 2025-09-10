@@ -52,7 +52,7 @@ const Home = () => {
           showsVerticalScrollIndicator={false}
           keyExtractor={(item) => item.id.toString()}
           ItemSeparatorComponent={() => <View style={{ height: 10 }}></View>}
-          renderItem={(data) => <TournamentCard data={data} />}
+          renderItem={(data) => <TournamentCard data={data} fetchTournaments={fetchTournaments} />}
         />
       </View>
     </View>

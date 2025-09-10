@@ -15,6 +15,10 @@ export type TeamType = {
   losses: 0;
 };
 
+export type Bracket = {
+  [roundOrSet: number]: MatchType[];
+};
+
 export type TournamentType = {
   id: string;
   name: string;
@@ -22,7 +26,7 @@ export type TournamentType = {
   sets?: number;
   mode: TOURNAMENT_MODE;
   teams: TeamType[];
-  bracket: MatchType[];
+  bracket: Bracket;
   status: MATCH_STATUS;
   pointsPerMatch: number;
   tieBreakerPoints?: number;

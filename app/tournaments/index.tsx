@@ -95,7 +95,7 @@ const Index = () => {
       };
       const result = await createTournament(data);
       if (result?.lastInsertRowId) {
-        router.push(`/tournaments/${result.lastInsertRowId}/Teams`);
+        router.push(`/tournaments/${data.id}/Teams`);
       }
     }
   };
