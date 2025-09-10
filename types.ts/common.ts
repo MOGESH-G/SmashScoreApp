@@ -40,8 +40,8 @@ export type MatchType = {
   tournamentId: string;
   team1: TeamType | null;
   team2: TeamType | null;
-  team1Score: 0;
-  team2Score: 0;
+  team1Score: number;
+  team2Score: number;
   winner: string | null;
   status: MATCH_STATUS;
   position: number;
