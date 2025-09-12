@@ -40,7 +40,7 @@ const Home = () => {
       </View>
       <Button title="playes" onPress={() => router.push("/Players")} />
 
-      <View className="flex-1 w-full mb-8">
+      <View className="flex-1 w-full mb-16">
         <Text className="font-semibold text-lg">Recent Tournaments</Text>
         <FlatList
           data={tournaments}

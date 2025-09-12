@@ -27,7 +27,7 @@ const initialTournamentData: TournamentType = {
   id: "",
   name: "",
   format: TOURNAMENT_FORMATS.SINGLE_ELIM,
-  sets: 0,
+  sets: 1,
   mode: TOURNAMENT_MODE.SINGLES,
   teams: [],
   pointsPerMatch: 21,

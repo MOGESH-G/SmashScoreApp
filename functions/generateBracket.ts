@@ -291,7 +291,6 @@ export const generateRoundRobin = (teams: TeamType[], tournamentId: string, setC
       currentSet = (currentSet % setCount) + 1;
     }
   }
-
   return sets;
 };
 

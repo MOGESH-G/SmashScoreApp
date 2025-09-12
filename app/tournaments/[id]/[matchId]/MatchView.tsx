@@ -3,7 +3,7 @@ import { getTournamentById, patchTournament } from "@/services/databaseService";
 import { MatchType, PlayerType, TournamentType } from "@/types.ts/common";
 import { AntDesign } from "@expo/vector-icons";
 import { Image } from "expo-image";
-import { useFocusEffect, useLocalSearchParams } from "expo-router";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import * as ScreenOrientation from "expo-screen-orientation";
 import { StatusBar } from "expo-status-bar";
 import { useCallback, useEffect, useState } from "react";
@@ -14,6 +14,7 @@ const { width, height } = Dimensions.get("window");
 
 const MatchView = () => {
   const { matchId, id, set } = useLocalSearchParams();
+  const router = useRouter();
   const [tournamentData, setTournamentData] = useState<TournamentType>();
   const [matchData, setMatchData] = useState<MatchType>();
   const [team1, setTeam1] = useState<PlayerType[]>([]);
@@ -283,7 +284,10 @@ const MatchView = () => {
               <TouchableOpacity
                 activeOpacity={0.5}
                 className="absolute top-2 right-2"
-                onPress={() => setModalOpen(false)}
+                onPress={() => {
+                  setModalOpen(false);
+                  // router.back();
+                }}
               >
                 <AntDesign name="close" size={30} />
               </TouchableOpacity>
