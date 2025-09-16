@@ -10,6 +10,10 @@ import Animated, {
 
 type Props = {
   children: React.ReactNode;
+  containerSize: {
+    width: number;
+    height: number;
+  };
   width?: number;
   height?: number;
   minScale?: number;
@@ -18,6 +22,7 @@ type Props = {
 
 export default function PanZoomView({
   children,
+  containerSize,
   width,
   height,
   minScale = 0.5,
@@ -83,24 +88,47 @@ export default function PanZoomView({
       { scale: scale.value },
     ],
   }));
-
   return (
     <GestureHandlerRootView style={styles.flex}>
       <GestureDetector gesture={gesture}>
         <Animated.View
-          style={[{ width: width, height: height, overflow: "hidden" }, animatedStyle]}
-          onLayout={(e) => {
-            if (!width || !height) {
-              const { width: w, height: h } = e.nativeEvent.layout;
-              setContentSize({ width: w, height: h });
-            }
+          style={{
+            width: containerSize.width,
+            height: containerSize.height,
           }}
         >
-          {children}
+          <Animated.View
+            style={[{ width, height }, animatedStyle]}
+            onLayout={(e) => {
+              if (!width || !height) {
+                const { width: w, height: h } = e.nativeEvent.layout;
+                setContentSize({ width: w, height: h });
+              }
+            }}
+          >
+            {children}
+          </Animated.View>
         </Animated.View>
       </GestureDetector>
     </GestureHandlerRootView>
   );
+  // return (
+  //   <GestureHandlerRootView style={styles.flex}>
+  //     <GestureDetector gesture={gesture}>
+  //       <Animated.View
+  //         style={[{ width: width, height: height, overflow: "hidden" }, animatedStyle]}
+  //         onLayout={(e) => {
+  //           if (!width || !height) {
+  //             const { width: w, height: h } = e.nativeEvent.layout;
+  //             setContentSize({ width: w, height: h });
+  //           }
+  //         }}
+  //       >
+  //         {children}
+  //       </Animated.View>
+  //     </GestureDetector>
+  //   </GestureHandlerRootView>
+  // );
 }
 const styles = StyleSheet.create({
   flex: { flex: 1, overflow: "hidden" },

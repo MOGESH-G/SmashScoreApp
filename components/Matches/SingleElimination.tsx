@@ -1,12 +1,12 @@
 import { Bracket, MatchType, TournamentType } from "@/types.ts/common";
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import Svg, { G, Line } from "react-native-svg";
 import PanZoomView from "../PanView";
 
-const cardWidth = 120;
-const cardHeight = 80;
-const xGap = 40;
+const cardWidth = 180;
+const cardHeight = 100;
+const xGap = 80;
 const yGap = 80;
 
 type SingleEliminationType = {
@@ -28,6 +28,10 @@ const SingleElimination = ({ data, updateMatchData, simpleMode }: SingleEliminat
     .sort((a, b) => a - b);
   const totalRounds = rounds.length;
   const { layout, totalWidth, totalHeight } = useMemo(() => computeLayout(matches), [matches]);
+  const [containerSize, setContainerSize] = useState({
+    width: 0,
+    height: 0,
+  });
 
   return (
     <View className="flex-1 bg-white">
@@ -36,11 +40,18 @@ const SingleElimination = ({ data, updateMatchData, simpleMode }: SingleEliminat
           margin: 20,
           marginBottom: 90,
         }}
+        onLayout={(e) => {
+          const { width, height } = e.nativeEvent.layout;
+          setContainerSize({
+            width,
+            height,
+          });
+        }}
         className="flex-1 border-dashed border-2 overflow-hidden bg-gray-200"
       >
-        <PanZoomView width={totalWidth} height={totalHeight}>
+        <PanZoomView width={totalWidth} height={totalHeight} containerSize={containerSize}>
           <View
-            className="bg-yellow-200 overflow-visible"
+            className="overflow-visible"
             style={{
               width: totalWidth,
               height: totalHeight,
@@ -61,7 +72,7 @@ const SingleElimination = ({ data, updateMatchData, simpleMode }: SingleEliminat
                   );
                   if (!parent) return null;
 
-                  const childX = match.x + cardHeight;
+                  const childX = match.x + cardHeight / 3;
                   const childY = match.y;
                   const parentX = parent.x + cardHeight / 2;
                   const parentY = parent.y;
@@ -108,7 +119,11 @@ const SingleElimination = ({ data, updateMatchData, simpleMode }: SingleEliminat
                     top: match.y,
                     width: match.width,
                     height: match.height,
-                    transform: [{ translateY: -match.height / 2 }, { rotate: "90deg" }],
+                    transform: [
+                      { translateY: -match.height / 2 },
+                      { translateX: -match.width / 3 },
+                      { rotate: "90deg" },
+                    ],
                   }}
                 >
                   <View
