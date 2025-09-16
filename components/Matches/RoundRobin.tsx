@@ -13,7 +13,12 @@ import ThunderSvg from "../Svg/Thunder";
 
 type RoundRobinType = {
   data: TournamentType;
-  updateMatchData: (matchId: string, key: keyof MatchType, value: any) => void;
+  updateMatchData: (
+    tournamentData: TournamentType,
+    matchId: string,
+    key: keyof MatchType,
+    value: any
+  ) => Promise<boolean>;
   simpleMode: boolean;
 };
 
@@ -38,10 +43,6 @@ const RoundRobin = ({ data, updateMatchData, simpleMode }: RoundRobinType) => {
       }
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [simpleMode]);
-
-  useEffect(() => {
-    console.log(simpleMode);
   }, [simpleMode]);
 
   const thunderAnimationStyle = useAnimatedStyle(() => ({
@@ -130,7 +131,7 @@ const RoundRobin = ({ data, updateMatchData, simpleMode }: RoundRobinType) => {
                                 elevation: 4,
                               }}
                               onPress={() =>
-                                updateMatchData(match.id, "team1Score", match.team1Score + 1)
+                                updateMatchData(data, match.id, "team1Score", match.team1Score + 1)
                               }
                               className="bg-green justify-center items-center px-10 py-2 rounded-md"
                             >
@@ -146,7 +147,7 @@ const RoundRobin = ({ data, updateMatchData, simpleMode }: RoundRobinType) => {
                                 justifyContent: match.winner ? "flex-end" : "space-between",
                               }}
                               onPress={() =>
-                                updateMatchData(match.id, "team1Score", data.pointsPerMatch)
+                                updateMatchData(data, match.id, "team1Score", data.pointsPerMatch)
                               }
                               className="bg-green items-center px-10 py-2 rounded-md"
                             >
@@ -253,7 +254,7 @@ const RoundRobin = ({ data, updateMatchData, simpleMode }: RoundRobinType) => {
                                 elevation: 4,
                               }}
                               onPress={() =>
-                                updateMatchData(match.id, "team2Score", match.team2Score + 1)
+                                updateMatchData(data, match.id, "team2Score", match.team2Score + 1)
                               }
                               className="bg-green justify-center items-center px-10 py-2 rounded-md"
                             >
@@ -268,7 +269,7 @@ const RoundRobin = ({ data, updateMatchData, simpleMode }: RoundRobinType) => {
                                 elevation: 4,
                               }}
                               onPress={() =>
-                                updateMatchData(match.id, "team2Score", data.pointsPerMatch)
+                                updateMatchData(data, match.id, "team2Score", data.pointsPerMatch)
                               }
                               className="bg-green justify-center items-center px-10 py-2 rounded-md"
                             >

@@ -8,8 +8,9 @@ import {
   generateSingleElimination,
   generateSwissTournament,
 } from "@/functions/generateBracket";
+import { updateMatchData } from "@/functions/updateTournamentData";
 import { getTournamentById, patchTournament } from "@/services/databaseService";
-import { Bracket, MatchType, TOURNAMENT_FORMATS, TournamentType } from "@/types.ts/common";
+import { Bracket, TOURNAMENT_FORMATS, TournamentType } from "@/types.ts/common";
 import { AntDesign, Entypo } from "@expo/vector-icons";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
@@ -78,34 +79,34 @@ const Matches = () => {
     }
   };
 
-  const updateMatchData = async (matchId: string, key: keyof MatchType, value: any) => {
-    if (!tournamentData?.bracket) return;
+  // const updateMatchData = async (matchId: string, key: keyof MatchType, value: any) => {
+  //   if (!tournamentData?.bracket) return;
 
-    const updatedBracket = { ...tournamentData.bracket };
+  //   const updatedBracket = { ...tournamentData.bracket };
 
-    for (const round in updatedBracket) {
-      const matchIndex = updatedBracket[round].findIndex((m) => m.id === matchId);
-      if (matchIndex !== -1) {
-        const match = { ...updatedBracket[round][matchIndex], [key]: value };
+  //   for (const round in updatedBracket) {
+  //     const matchIndex = updatedBracket[round].findIndex((m) => m.id === matchId);
+  //     if (matchIndex !== -1) {
+  //       const match = { ...updatedBracket[round][matchIndex], [key]: value };
 
-        if ((key === "team1Score" || key === "team2Score") && tournamentData.pointsPerMatch) {
-          if (match.team1Score >= tournamentData.pointsPerMatch) {
-            match.winner = match.team1?.id ?? null;
-          } else if (match.team2Score >= tournamentData.pointsPerMatch) {
-            match.winner = match.team2?.id ?? null;
-          } else {
-            match.winner = null;
-          }
-        }
+  //       if ((key === "team1Score" || key === "team2Score") && tournamentData.pointsPerMatch) {
+  //         if (match.team1Score >= tournamentData.pointsPerMatch) {
+  //           match.winner = match.team1?.id ?? null;
+  //         } else if (match.team2Score >= tournamentData.pointsPerMatch) {
+  //           match.winner = match.team2?.id ?? null;
+  //         } else {
+  //           match.winner = null;
+  //         }
+  //       }
 
-        updatedBracket[round][matchIndex] = match;
-        break;
-      }
-    }
+  //       updatedBracket[round][matchIndex] = match;
+  //       break;
+  //     }
+  //   }
 
-    await patchTournament(tournamentData.id, "bracket", JSON.stringify(updatedBracket));
-    fetchTournament();
-  };
+  //   await patchTournament(tournamentData.id, "bracket", JSON.stringify(updatedBracket));
+  //   fetchTournament();
+  // };
 
   const generateLeaderboard = (bracket: Bracket) => {
     const pointsMap: Record<string, number> = {};
@@ -120,8 +121,6 @@ const Matches = () => {
         }
       });
     });
-
-    console.log(tournamentData?.teams);
 
     let leaderboard: LeaderBoardType[] = Object.entries(pointsMap).map(([id, points], index) => {
       const team = tournamentData?.teams.find((t) => t.id === id);
@@ -139,8 +138,6 @@ const Matches = () => {
       ...entry,
       position: index + 1,
     }));
-
-    console.log(leaderboard);
 
     setLeaderBoard(leaderboard);
   };

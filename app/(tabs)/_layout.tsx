@@ -1,4 +1,4 @@
-import { AntDesign, FontAwesome, Ionicons } from "@expo/vector-icons";
+import { AntDesign, FontAwesome, FontAwesome6, Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 import React from "react";
 
@@ -50,17 +50,16 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="stats"
+        name="players"
         options={{
-          title: "Stats",
-          tabBarLabel: "Stats",
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons
-              name={focused ? "stats-chart" : "stats-chart-outline"}
-              size={24}
-              color={color}
-            />
-          ),
+          title: "Players",
+          tabBarLabel: "Players",
+          tabBarIcon: ({ color, focused }) =>
+            focused ? (
+              <FontAwesome6 name="users-line" size={24} color={color} />
+            ) : (
+              <FontAwesome6 name="users" size={24} color={color} />
+            ),
         }}
       />
       <Tabs.Screen

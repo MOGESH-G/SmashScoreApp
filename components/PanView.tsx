@@ -1,53 +1,82 @@
 import React, { useState } from "react";
-import { LayoutChangeEvent, StyleSheet, View } from "react-native";
+import { StyleSheet } from "react-native";
 import { Gesture, GestureDetector, GestureHandlerRootView } from "react-native-gesture-handler";
-import Animated, { useAnimatedStyle, useSharedValue } from "react-native-reanimated";
+import Animated, {
+  clamp,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from "react-native-reanimated";
 
-const clamp = (value: number, min: number, max: number) => {
-  "worklet";
-  return Math.max(min, Math.min(value, max));
+type Props = {
+  children: React.ReactNode;
+  width?: number;
+  height?: number;
+  minScale?: number;
+  maxScale?: number;
 };
 
-const PanZoomView = ({
+export default function PanZoomView({
   children,
-  minWidth,
-  minHeight,
-}: {
-  children: React.ReactNode;
-  minWidth: number;
-  minHeight: number;
-}) => {
-  const [container, setContainer] = useState({ width: 0, height: 0 });
+  width,
+  height,
+  minScale = 0.5,
+  maxScale = 3,
+}: Props) {
+  const [contentSize, setContentSize] = useState({ width: width ?? 0, height: height ?? 0 });
 
   const scale = useSharedValue(1);
   const offsetX = useSharedValue(0);
   const offsetY = useSharedValue(0);
+  const startScale = useSharedValue(1);
+  const startX = useSharedValue(0);
+  const startY = useSharedValue(0);
 
-  const onLayout = (e: LayoutChangeEvent) => {
-    const { width, height } = e.nativeEvent.layout;
-    setContainer({ width, height });
+  const clampBoundary = (offset: number, scaledContentSize: number, type: "width" | "height") => {
+    "worklet";
+    const maxPositive = type === "width" ? scaledContentSize / 4 : scaledContentSize;
+    const maxNegative = type === "width" ? -scaledContentSize / 2 : -scaledContentSize / 2;
+    return clamp(offset, maxNegative, maxPositive);
   };
 
-  const panGesture = Gesture.Pan().onUpdate((event) => {
-    const scaledWidth = minWidth * scale.value;
-    const scaledHeight = minHeight * scale.value;
+  const panGesture = Gesture.Pan()
+    .onStart(() => {
+      startX.value = offsetX.value;
+      startY.value = offsetY.value;
+    })
+    .onUpdate((e) => {
+      const scaledW = contentSize.width * scale.value;
+      const scaledH = contentSize.height * scale.value;
 
-    const maxX = Math.max(0, (scaledWidth - container.width) / 2);
-    const maxY = Math.max(0, (scaledHeight - container.height) / 2);
+      offsetX.value = clampBoundary(startX.value + e.translationX, scaledW, "width");
+      offsetY.value = clampBoundary(startY.value + e.translationY, scaledH, "height");
+    });
 
-    offsetX.value = clamp(event.translationX, -maxX, maxX);
-    offsetY.value = clamp(event.translationY, -maxY, maxY);
-  });
+  const pinchGesture = Gesture.Pinch()
+    .onStart(() => {
+      startScale.value = scale.value;
+      startX.value = offsetX.value;
+      startY.value = offsetY.value;
+    })
+    .onUpdate((e) => {
+      const newScale = Math.max(minScale, Math.min(maxScale, startScale.value * e.scale));
+      scale.value = newScale;
 
-  const pinchGesture = Gesture.Pinch().onUpdate((event) => {
-    scale.value = Math.max(event.scale, 1); // Prevent zooming below 1
-  });
+      const scaledW = contentSize.width * newScale;
+      const scaledH = contentSize.height * newScale;
 
-  const composedGesture = Gesture.Simultaneous(panGesture, pinchGesture);
+      offsetX.value = clampBoundary(startX.value, scaledW, "width");
+      offsetY.value = clampBoundary(startY.value, scaledH, "height");
+    })
+    .onEnd(() => {
+      scale.value = withSpring(scale.value);
+      offsetX.value = withSpring(offsetX.value);
+      offsetY.value = withSpring(offsetY.value);
+    });
+
+  const gesture = Gesture.Simultaneous(panGesture, pinchGesture);
 
   const animatedStyle = useAnimatedStyle(() => ({
-    width: minWidth,
-    height: minHeight,
     transform: [
       { translateX: offsetX.value },
       { translateY: offsetY.value },
@@ -56,20 +85,23 @@ const PanZoomView = ({
   }));
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <View style={{ flex: 1, overflow: "hidden" }} onLayout={onLayout}>
-        <GestureDetector gesture={composedGesture}>
-          <Animated.View style={[styles.pannable, animatedStyle]}>{children}</Animated.View>
-        </GestureDetector>
-      </View>
+    <GestureHandlerRootView style={styles.flex}>
+      <GestureDetector gesture={gesture}>
+        <Animated.View
+          style={[{ width: width, height: height, overflow: "hidden" }, animatedStyle]}
+          onLayout={(e) => {
+            if (!width || !height) {
+              const { width: w, height: h } = e.nativeEvent.layout;
+              setContentSize({ width: w, height: h });
+            }
+          }}
+        >
+          {children}
+        </Animated.View>
+      </GestureDetector>
     </GestureHandlerRootView>
   );
-};
-
+}
 const styles = StyleSheet.create({
-  pannable: {
-    overflow: "hidden",
-  },
+  flex: { flex: 1, overflow: "hidden" },
 });
-
-export default PanZoomView;

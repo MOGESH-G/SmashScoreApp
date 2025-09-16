@@ -1,5 +1,6 @@
 import CustomLoader from "@/components/CustomLoader";
-import { getTournamentById, patchTournament } from "@/services/databaseService";
+import { updateMatchData } from "@/functions/updateTournamentData";
+import { getTournamentById } from "@/services/databaseService";
 import { MatchType, PlayerType, TournamentType } from "@/types.ts/common";
 import { AntDesign } from "@expo/vector-icons";
 import { Image } from "expo-image";
@@ -56,34 +57,36 @@ const MatchView = () => {
     }
   };
 
-  const updateMatchData = async (key: keyof MatchType, value: any) => {
-    if (!tournamentData?.bracket) return;
+  // const updateMatchData = async (key: keyof MatchType, value: any) => {
+  //   if (!tournamentData?.bracket) return;
 
-    const updatedBracket = { ...tournamentData.bracket };
+  //   const updatedBracket = { ...tournamentData.bracket };
 
-    for (const round in updatedBracket) {
-      const matchIndex = updatedBracket[round].findIndex((m) => m.id === matchId);
-      if (matchIndex !== -1) {
-        const match = { ...updatedBracket[round][matchIndex], [key]: value };
+  //   if (tournamentData.format === TOURNAMENT_FORMATS.ROUND_ROBIN) {
+  //     for (const round in updatedBracket) {
+  //       const matchIndex = updatedBracket[round].findIndex((m) => m.id === matchId);
+  //       if (matchIndex !== -1) {
+  //         const match = { ...updatedBracket[round][matchIndex], [key]: value };
 
-        if ((key === "team1Score" || key === "team2Score") && tournamentData.pointsPerMatch) {
-          if (match.team1Score >= tournamentData.pointsPerMatch) {
-            match.winner = match.team1?.id ?? null;
-          } else if (match.team2Score >= tournamentData.pointsPerMatch) {
-            match.winner = match.team2?.id ?? null;
-          } else {
-            match.winner = null;
-          }
-        }
+  //         if ((key === "team1Score" || key === "team2Score") && tournamentData.pointsPerMatch) {
+  //           if (match.team1Score >= tournamentData.pointsPerMatch) {
+  //             match.winner = match.team1?.id ?? null;
+  //           } else if (match.team2Score >= tournamentData.pointsPerMatch) {
+  //             match.winner = match.team2?.id ?? null;
+  //           } else {
+  //             match.winner = null;
+  //           }
+  //         }
 
-        updatedBracket[round][matchIndex] = match;
-        break;
-      }
-    }
+  //         updatedBracket[round][matchIndex] = match;
+  //         break;
+  //       }
+  //     }
+  //   }
 
-    await patchTournament(tournamentData.id, "bracket", JSON.stringify(updatedBracket));
-    fetchTournament();
-  };
+  //   await patchTournament(tournamentData.id, "bracket", JSON.stringify(updatedBracket));
+  //   fetchTournament();
+  // };
 
   useFocusEffect(
     useCallback(() => {
@@ -100,7 +103,7 @@ const MatchView = () => {
     };
   }, []);
 
-  const handlePointChange = (team: number, point: number) => {
+  const handlePointChange = async (team: number, point: number) => {
     // const
     Vibration.vibrate(100);
     if (!matchData) return;
@@ -111,14 +114,18 @@ const MatchView = () => {
       //   ...matchData,
       //   team1Score: newPoint,
       // });
-      updateMatchData("team1Score", newPoint);
+      if (tournamentData && matchId) {
+        await updateMatchData(tournamentData, matchId as string, "team1Score", newPoint);
+      }
     } else if (team === 2) {
       const newPoint = matchData.team2Score + point > 0 ? matchData.team2Score + point : 0;
       // setMatchData({
       //   ...matchData,
       //   team2Score: newPoint,
       // });
-      updateMatchData("team2Score", newPoint);
+      if (tournamentData && matchId) {
+        await updateMatchData(tournamentData, matchId as string, "team2Score", newPoint);
+      }
     }
   };
 

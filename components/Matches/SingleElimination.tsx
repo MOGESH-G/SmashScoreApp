@@ -1,136 +1,154 @@
 import { Bracket, MatchType, TournamentType } from "@/types.ts/common";
 import React, { useMemo } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
-import Svg, { Line } from "react-native-svg";
+import Svg, { G, Line } from "react-native-svg";
 import PanZoomView from "../PanView";
+
+const cardWidth = 120;
+const cardHeight = 80;
+const xGap = 40;
+const yGap = 80;
 
 type SingleEliminationType = {
   data: TournamentType;
-  updateMatchData: (matchId: string, key: keyof MatchType, value: any) => void;
+  updateMatchData: (
+    tournamentData: TournamentType,
+    matchId: string,
+    key: keyof MatchType,
+    value: any
+  ) => Promise<boolean>;
   simpleMode: boolean;
 };
 
 const SingleElimination = ({ data, updateMatchData, simpleMode }: SingleEliminationType) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const matches: Bracket = data.bracket || [];
-  //   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
-  const { layout, totalWidth, totalHeight } = useMemo(
-    () => computeLayout(matches, 120, 60, 40, 80),
-    [matches]
-  );
+  const rounds = Object.keys(data)
+    .map(Number)
+    .sort((a, b) => a - b);
+  const totalRounds = rounds.length;
+  const { layout, totalWidth, totalHeight } = useMemo(() => computeLayout(matches), [matches]);
 
   return (
-    <View className="m-10 flex-1 border-dashed bottom-2 bg-red-300">
-      <PanZoomView minWidth={totalWidth} minHeight={totalHeight}>
-        <View
-          style={{
-            width: totalWidth,
-            height: totalHeight,
-            backgroundColor: "white",
-            position: "relative",
-          }}
-        >
-          {/* <View
+    <View className="flex-1 bg-white">
+      <View
         style={{
-          flexDirection: "row",
-          flexGrow: 1,
-          alignItems: "center",
-          backgroundColor: "white",
-          borderRadius: 10,
-          justifyContent: "center",
-          position: "relative",
+          margin: 20,
+          marginBottom: 90,
         }}
-        className="flex-1 w-full h-full"
-        onLayout={(e) => {
-          const { width, height } = e.nativeEvent.layout;
-          setContainerSize({ width, height });
-        }}
-      > */}
-          <Svg
+        className="flex-1 border-dashed border-2 overflow-hidden bg-gray-200"
+      >
+        <PanZoomView width={totalWidth} height={totalHeight}>
+          <View
+            className="bg-yellow-200 overflow-visible"
             style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              width: "100%",
-              height: "100%",
+              width: totalWidth,
+              height: totalHeight,
             }}
           >
-            {layout.map((match) => {
-              if (match.winner) {
-                const nextMatch = layout.find(
-                  (m) =>
-                    m.round === match.round + 1 &&
-                    (m.team1?.id === match.winner || m.team2?.id === match.winner)
-                );
-                if (nextMatch) {
-                  return (
-                    <Line
-                      key={`line-${match.id}-${nextMatch.id}`}
-                      x1={match.x + match.width}
-                      y1={match.y + match.height / 2}
-                      x2={nextMatch.x}
-                      y2={nextMatch.y + nextMatch.height / 2}
-                      stroke="black"
-                      strokeWidth="2"
-                    />
-                  );
-                }
-              }
-              return null;
-            })}
-          </Svg>
-
-          {layout.map((match) => (
-            <View
-              key={match.id}
-              style={{
-                position: "absolute",
-                left: match.x,
-                top: match.y,
-                width: match.width,
-                height: match.height,
-                transform: [
-                  { translateX: -match.width / 2 },
-                  { translateY: -match.height / 2 },
-                  { rotate: "-90deg" },
-                  { translateX: match.width / 2 },
-                  { translateY: match.height / 2 },
-                ],
-              }}
+            <Svg
+              width={totalWidth}
+              height={totalHeight}
+              style={{ position: "absolute", top: 0, left: 0 }}
             >
-              <View
-                style={{
-                  backgroundColor: "#fff",
-                  borderRadius: 12,
-                  padding: 6,
-                  flex: 1,
-                  justifyContent: "center",
-                  shadowColor: "#000",
-                  shadowOpacity: 0.1,
-                  shadowRadius: 5,
-                  elevation: 3,
-                }}
-              >
-                {[match.team1, match.team2].map((team) => (
-                  <TouchableOpacity
-                    key={team?.id}
+              {layout
+                .filter((m) => m.round < totalRounds - 1)
+                .map((match) => {
+                  const nextRound = match.round + 1;
+                  const parentIndex = Math.floor(match.matchIndex / 2);
+                  const parent = layout.find(
+                    (m) => m.round === nextRound && m.matchIndex === parentIndex
+                  );
+                  if (!parent) return null;
+
+                  const childX = match.x + cardHeight;
+                  const childY = match.y;
+                  const parentX = parent.x + cardHeight / 2;
+                  const parentY = parent.y;
+                  const junctionX = (childX + parentX) / 2;
+
+                  return (
+                    <G key={`${match.id}-${parent.id}`}>
+                      <Line
+                        x1={childX}
+                        y1={childY}
+                        x2={junctionX}
+                        y2={childY}
+                        stroke="black"
+                        strokeWidth="2"
+                      />
+                      <Line
+                        x1={junctionX}
+                        y1={parentY}
+                        x2={parentX}
+                        y2={parentY}
+                        stroke="black"
+                        strokeWidth="2"
+                      />
+                      <Line
+                        x1={junctionX}
+                        y1={childY}
+                        x2={junctionX}
+                        y2={parentY}
+                        stroke="black"
+                        strokeWidth="2"
+                      />
+                    </G>
+                  );
+                })}
+            </Svg>
+
+            <View style={{ width: totalWidth, height: totalHeight }}>
+              {layout.map((match) => (
+                <View
+                  key={match.id}
+                  style={{
+                    position: "absolute",
+                    left: match.x,
+                    top: match.y,
+                    width: match.width,
+                    height: match.height,
+                    transform: [{ translateY: -match.height / 2 }, { rotate: "90deg" }],
+                  }}
+                >
+                  <View
                     style={{
-                      backgroundColor: match.winner === team?.id ? "#4ade80" : "#f3f4f6",
-                      borderRadius: 6,
-                      padding: 4,
-                      marginBottom: 4,
+                      backgroundColor: "#fff",
+                      borderRadius: 12,
+                      padding: 6,
+                      flex: 1,
+                      justifyContent: "center",
+                      shadowColor: "#000",
+                      shadowOpacity: 0.1,
+                      shadowRadius: 5,
+                      elevation: 3,
                     }}
                   >
-                    <Text numberOfLines={1} ellipsizeMode="tail">
-                      {team?.name}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
+                    {[match.team1, match.team2].map((team) => (
+                      <TouchableOpacity
+                        key={team?.id}
+                        style={{
+                          backgroundColor: match.winner === team?.id ? "#4ade80" : "#f3f4f6",
+                          borderRadius: 6,
+                          padding: 4,
+                          marginBottom: 4,
+                        }}
+                        onPress={() => {
+                          updateMatchData(data, match.id, "winner", team?.id);
+                        }}
+                      >
+                        <Text numberOfLines={1} ellipsizeMode="tail">
+                          {team?.name}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+              ))}
             </View>
-          ))}
-        </View>
-      </PanZoomView>
+          </View>
+        </PanZoomView>
+      </View>
     </View>
   );
 };
@@ -141,51 +159,53 @@ export type LayoutMatch = MatchType & {
   y: number;
 };
 
-export type MatchLayout = MatchType & {
+type MatchLayout = MatchType & {
   round: number;
+  matchIndex: number;
   x: number;
   y: number;
   width: number;
   height: number;
 };
 
-function computeLayout(
-  data: Bracket,
-  cardWidth = 120,
-  cardHeight = 60,
-  xGap = 40,
-  yGap = 80
-): { layout: MatchLayout[]; totalWidth: number; totalHeight: number } {
-  const rounds = Object.keys(data);
+function computeLayout(data: Bracket): {
+  layout: MatchLayout[];
+  totalWidth: number;
+  totalHeight: number;
+} {
+  const rounds = Object.keys(data)
+    .map(Number)
+    .sort((a, b) => a - b);
+  const totalRounds = rounds.length;
+
+  const w = cardHeight;
+  const h = cardWidth;
+
+  const xStep = w + xGap;
+  const yStep = h + yGap;
+
+  const totalWidth = totalRounds * xStep - xGap + w;
+  const firstCount = data[rounds[0]].length;
+  const totalHeight = firstCount * yStep - yGap + h;
+
   const layout: MatchLayout[] = [];
 
-  const totalRounds = rounds.length;
-  const maxMatches = Math.max(...rounds.map((r) => data[parseInt(r)].length));
-  const totalWidth = maxMatches * (cardHeight + xGap) + xGap;
-  const totalHeight = totalRounds * (cardWidth + yGap) + yGap;
+  rounds.forEach((roundKey, roundIdx) => {
+    const matches = data[roundKey];
+    const count = matches.length;
 
-  //   const cardWidth = (containerHeight / totalRounds) * 0.6;
-  //   const cardHeight = (containerWidth / maxMatches) * 0.6;
+    const x = roundIdx * xStep + w / 2;
 
-  rounds.forEach((roundKey, roundIndex) => {
-    const matches = data[Number(roundKey)];
+    const slotHeight = totalHeight / count;
+    const baseY = slotHeight / 2;
 
-    // const totalWidth = matches.length * cardHeight;
-    // const totalHeight = rounds.length * cardWidth;
-
-    // const remainingWidth = containerWidth - totalWidth;
-    // const remainingHeight = containerHeight - totalHeight;
-
-    // const xGap = remainingWidth / (matches.length + 1);
-    // const yGap = remainingHeight / totalRounds + 1;
-
-    matches.forEach((match, matchIndex) => {
-      const x = matchIndex * (cardHeight + xGap) + xGap;
-      const y = (totalRounds - roundIndex) * (cardWidth + yGap) - cardWidth + yGap;
+    matches.forEach((match, matchIdx) => {
+      const y = baseY + matchIdx * slotHeight;
 
       layout.push({
         ...match,
-        round: roundIndex,
+        round: roundIdx,
+        matchIndex: matchIdx,
         x,
         y,
         width: cardWidth,
