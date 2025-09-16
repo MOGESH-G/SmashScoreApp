@@ -18,7 +18,7 @@ type RoundRobinType = {
     matchId: string,
     key: keyof MatchType,
     value: any
-  ) => Promise<boolean>;
+  ) => Promise<void>;
   simpleMode: boolean;
 };
 

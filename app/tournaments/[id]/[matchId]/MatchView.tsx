@@ -4,18 +4,15 @@ import { getTournamentById } from "@/services/databaseService";
 import { MatchType, PlayerType, TournamentType } from "@/types.ts/common";
 import { AntDesign } from "@expo/vector-icons";
 import { Image } from "expo-image";
-import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import { useFocusEffect, useLocalSearchParams } from "expo-router";
 import * as ScreenOrientation from "expo-screen-orientation";
 import { StatusBar } from "expo-status-bar";
 import { useCallback, useEffect, useState } from "react";
-import { Dimensions, Pressable, Text, TouchableOpacity, Vibration, View } from "react-native";
+import { Pressable, Text, TouchableOpacity, Vibration, View } from "react-native";
 import ConfettiCannon from "react-native-confetti-cannon";
-
-const { width, height } = Dimensions.get("window");
 
 const MatchView = () => {
   const { matchId, id, set } = useLocalSearchParams();
-  const router = useRouter();
   const [tournamentData, setTournamentData] = useState<TournamentType>();
   const [matchData, setMatchData] = useState<MatchType>();
   const [team1, setTeam1] = useState<PlayerType[]>([]);
@@ -57,37 +54,6 @@ const MatchView = () => {
     }
   };
 
-  // const updateMatchData = async (key: keyof MatchType, value: any) => {
-  //   if (!tournamentData?.bracket) return;
-
-  //   const updatedBracket = { ...tournamentData.bracket };
-
-  //   if (tournamentData.format === TOURNAMENT_FORMATS.ROUND_ROBIN) {
-  //     for (const round in updatedBracket) {
-  //       const matchIndex = updatedBracket[round].findIndex((m) => m.id === matchId);
-  //       if (matchIndex !== -1) {
-  //         const match = { ...updatedBracket[round][matchIndex], [key]: value };
-
-  //         if ((key === "team1Score" || key === "team2Score") && tournamentData.pointsPerMatch) {
-  //           if (match.team1Score >= tournamentData.pointsPerMatch) {
-  //             match.winner = match.team1?.id ?? null;
-  //           } else if (match.team2Score >= tournamentData.pointsPerMatch) {
-  //             match.winner = match.team2?.id ?? null;
-  //           } else {
-  //             match.winner = null;
-  //           }
-  //         }
-
-  //         updatedBracket[round][matchIndex] = match;
-  //         break;
-  //       }
-  //     }
-  //   }
-
-  //   await patchTournament(tournamentData.id, "bracket", JSON.stringify(updatedBracket));
-  //   fetchTournament();
-  // };
-
   useFocusEffect(
     useCallback(() => {
       fetchTournament();
@@ -104,7 +70,6 @@ const MatchView = () => {
   }, []);
 
   const handlePointChange = async (team: number, point: number) => {
-    // const
     Vibration.vibrate(100);
     if (!matchData) return;
 
@@ -115,7 +80,15 @@ const MatchView = () => {
       //   team1Score: newPoint,
       // });
       if (tournamentData && matchId) {
-        await updateMatchData(tournamentData, matchId as string, "team1Score", newPoint);
+        const updated = await updateMatchData(
+          tournamentData,
+          matchId as string,
+          "team1Score",
+          newPoint
+        );
+        if (updated) {
+          fetchTournament();
+        }
       }
     } else if (team === 2) {
       const newPoint = matchData.team2Score + point > 0 ? matchData.team2Score + point : 0;
@@ -124,7 +97,15 @@ const MatchView = () => {
       //   team2Score: newPoint,
       // });
       if (tournamentData && matchId) {
-        await updateMatchData(tournamentData, matchId as string, "team2Score", newPoint);
+        const updated = await updateMatchData(
+          tournamentData,
+          matchId as string,
+          "team2Score",
+          newPoint
+        );
+        if (updated) {
+          fetchTournament();
+        }
       }
     }
   };

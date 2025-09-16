@@ -16,7 +16,7 @@ type SingleEliminationType = {
     matchId: string,
     key: keyof MatchType,
     value: any
-  ) => Promise<boolean>;
+  ) => Promise<void>;
   simpleMode: boolean;
 };
 
@@ -145,7 +145,7 @@ const SingleElimination = ({ data, updateMatchData, simpleMode }: SingleEliminat
                         style={{
                           backgroundColor: match.winner === team?.id ? "#4ade80" : "#f3f4f6",
                           borderRadius: 6,
-                          padding: 4,
+                          padding: 10,
                           marginBottom: 4,
                         }}
                         onPress={() => {

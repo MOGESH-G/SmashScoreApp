@@ -10,7 +10,7 @@ import {
 } from "@/functions/generateBracket";
 import { updateMatchData } from "@/functions/updateTournamentData";
 import { getTournamentById, patchTournament } from "@/services/databaseService";
-import { Bracket, TOURNAMENT_FORMATS, TournamentType } from "@/types.ts/common";
+import { Bracket, MatchType, TOURNAMENT_FORMATS, TournamentType } from "@/types.ts/common";
 import { AntDesign, Entypo } from "@expo/vector-icons";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
@@ -79,35 +79,6 @@ const Matches = () => {
     }
   };
 
-  // const updateMatchData = async (matchId: string, key: keyof MatchType, value: any) => {
-  //   if (!tournamentData?.bracket) return;
-
-  //   const updatedBracket = { ...tournamentData.bracket };
-
-  //   for (const round in updatedBracket) {
-  //     const matchIndex = updatedBracket[round].findIndex((m) => m.id === matchId);
-  //     if (matchIndex !== -1) {
-  //       const match = { ...updatedBracket[round][matchIndex], [key]: value };
-
-  //       if ((key === "team1Score" || key === "team2Score") && tournamentData.pointsPerMatch) {
-  //         if (match.team1Score >= tournamentData.pointsPerMatch) {
-  //           match.winner = match.team1?.id ?? null;
-  //         } else if (match.team2Score >= tournamentData.pointsPerMatch) {
-  //           match.winner = match.team2?.id ?? null;
-  //         } else {
-  //           match.winner = null;
-  //         }
-  //       }
-
-  //       updatedBracket[round][matchIndex] = match;
-  //       break;
-  //     }
-  //   }
-
-  //   await patchTournament(tournamentData.id, "bracket", JSON.stringify(updatedBracket));
-  //   fetchTournament();
-  // };
-
   const generateLeaderboard = (bracket: Bracket) => {
     const pointsMap: Record<string, number> = {};
     tournamentData?.teams.forEach((team) => {
@@ -158,6 +129,18 @@ const Matches = () => {
     }, [])
   );
 
+  const updateTournament = async (
+    tournamentData: TournamentType,
+    matchId: string,
+    key: keyof MatchType,
+    value: any
+  ) => {
+    const updated = await updateMatchData(tournamentData, matchId, key, value);
+    if (updated) {
+      fetchTournament();
+    }
+  };
+
   return (
     <View className="flex-1 w-full overflow-hidden">
       <View className="w-full flex-row bg-secondary h-[5rem] items-center px-2 gap-4">
@@ -176,7 +159,7 @@ const Matches = () => {
       {tournamentData?.format === TOURNAMENT_FORMATS.ROUND_ROBIN && (
         <RoundRobin
           data={tournamentData}
-          updateMatchData={updateMatchData}
+          updateMatchData={updateTournament}
           simpleMode={simpleMode}
         />
       )}
@@ -184,7 +167,7 @@ const Matches = () => {
       {tournamentData?.format === TOURNAMENT_FORMATS.SINGLE_ELIM && (
         <SingleElimination
           data={tournamentData}
-          updateMatchData={updateMatchData}
+          updateMatchData={updateTournament}
           simpleMode={simpleMode}
         />
       )}
