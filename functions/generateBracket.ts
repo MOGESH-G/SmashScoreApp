@@ -294,45 +294,253 @@ export const generateRoundRobin = (teams: TeamType[], tournamentId: string, setC
   return sets;
 };
 
-export const generateSwissTournament = (
-  teams: TeamType[],
-  tournamentId: string,
-  rounds?: number
-): { matches: MatchType[]; rounds: number } => {
-  const numTeams = teams.length;
-  if (!rounds) rounds = Math.ceil(Math.log2(numTeams));
+// export const generateSwissTournament = (
+//   teams: TeamType[],
+//   tournamentId: string,
+//   rounds?: number
+// ): Record<number, MatchType[]> => {
+//   const numTeams = teams.length;
+//   if (!rounds) rounds = Math.ceil(Math.log2(numTeams));
 
-  const matches: MatchType[] = [];
+//   const swissTeams = teams.map((team) => ({
+//     team,
+//     points: 0,
+//     opponents: new Set<string>(),
+//     byes: 0,
+//   }));
+
+//   let matchNumber = 1;
+//   const schedule: Record<number, MatchType[]> = {};
+
+//   const generateRound = (roundIndex: number) => {
+//     swissTeams.sort((a, b) => b.points - a.points);
+
+//     const roundMatches: MatchType[] = [];
+//     const used = new Set<string>();
+
+//     for (let i = 0; i < swissTeams.length; i++) {
+//       const team1 = swissTeams[i];
+//       if (used.has(team1.team.id)) continue;
+
+//       let team2: typeof team1 | null = null;
+//       for (let j = i + 1; j < swissTeams.length; j++) {
+//         if (!used.has(swissTeams[j].team.id) && !team1.opponents.has(swissTeams[j].team.id)) {
+//           team2 = swissTeams[j];
+//           break;
+//         }
+//       }
+
+//       if (!team2) {
+//         // bye
+//         roundMatches.push({
+//           id: generateUUID(),
+//           tournamentId,
+//           position: matchNumber++,
+//           team1: team1.team,
+//           team2: null,
+//           team1Score: 0,
+//           team2Score: 0,
+//           winner: null,
+//           status: MATCH_STATUS.PENDING,
+//         });
+//         team1.byes++;
+//         used.add(team1.team.id);
+//       } else {
+//         roundMatches.push({
+//           id: generateUUID(),
+//           tournamentId,
+//           position: matchNumber++,
+//           team1: team1.team,
+//           team2: team2.team,
+//           team1Score: 0,
+//           team2Score: 0,
+//           winner: null,
+//           status: MATCH_STATUS.PENDING,
+//         });
+
+//         team1.opponents.add(team2.team.id);
+//         team2.opponents.add(team1.team.id);
+
+//         used.add(team1.team.id);
+//         used.add(team2.team.id);
+//       }
+//     }
+
+//     schedule[roundIndex + 1] = roundMatches;
+//   };
+
+//   for (let r = 0; r < rounds; r++) {
+//     generateRound(r);
+//   }
+
+//   return schedule;
+// };
+
+export const generateSwissTournament = (
+  teams: TeamType[], // must include currentScore property
+  tournamentId: string,
+  roundCount: number
+) => {
+  const rounds: Record<number, MatchType[]> = {};
+  // Track matches played per team for rematch avoidance
+  const matchesPlayed: Record<string, Set<string>> = {};
   let matchNumber = 1;
 
-  const swissTeams = teams.map((team) => ({
-    team,
-    points: 0,
-    opponents: new Set<string>(),
-    byes: 0,
-  }));
-
-  for (let i = 0; i < swissTeams.length; i += 2) {
-    const team1 = swissTeams[i];
-    const team2 = swissTeams[i + 1] || null;
-
-    matches.push({
-      id: generateUUID(),
-      tournamentId,
-      position: matchNumber++,
-      team1: team1.team,
-      team2: team2 ? team2.team : null,
-      team1Score: 0,
-      team2Score: 0,
-      winner: null,
-      status: MATCH_STATUS.PENDING,
-    });
-
-    if (team2) {
-      team1.opponents.add(team2.team.id);
-      team2.opponents.add(team1.team.id);
-    }
+  for (const team of teams) {
+    matchesPlayed[team.id] = new Set();
   }
 
-  return { matches, rounds };
+  for (let round = 1; round <= roundCount; round++) {
+    const sortedTeams = [...teams].sort((a, b) => b.wins - a.wins || a.id.localeCompare(b.id));
+
+    const used = new Set<string>();
+    const matches: MatchType[] = [];
+
+    let i = 0;
+
+    while (i < sortedTeams.length) {
+      const team1 = sortedTeams[i];
+      let found = false;
+      for (let j = i + 1; j < sortedTeams.length; j++) {
+        const team2 = sortedTeams[j];
+        if (!used.has(team2.id) && !matchesPlayed[team1.id].has(team2.id)) {
+          const match: MatchType = {
+            id: generateUUID(),
+            tournamentId,
+            position: matchNumber++,
+            team1,
+            team2,
+            team1Score: 0,
+            team2Score: 0,
+            winner: null,
+            status: MATCH_STATUS.PENDING,
+          };
+          matches.push(match);
+          matchesPlayed[team1.id].add(team2.id);
+          matchesPlayed[team2.id].add(team1.id);
+          used.add(team1.id);
+          used.add(team2.id);
+          found = true;
+          break;
+        }
+      }
+      if (!found && !used.has(team1.id)) {
+        const match: MatchType = {
+          id: generateUUID(),
+          tournamentId,
+          position: matchNumber++,
+          team1,
+          team2: null,
+          team1Score: 0,
+          team2Score: 0,
+          winner: team1.id,
+          status: MATCH_STATUS.PENDING,
+        };
+        matches.push(match);
+        used.add(team1.id);
+      }
+      i++;
+      while (i < sortedTeams.length && used.has(sortedTeams[i].id)) {
+        i++;
+      }
+    }
+    rounds[round] = matches;
+  }
+  return rounds;
 };
+
+// export function generateHybridTournament(
+//   teams: TeamType[],
+//   groupCount: number,
+//   playoffQualifiers: number // total teams for knockout from all groups
+// ) {
+//   // 1. Divide teams into groups
+//   const groups: TeamType[][] = Array.from({ length: groupCount }, () => []);
+//   teams.forEach((t, i) => groups[i % groupCount].push(t));
+
+//   // 2. Generate round robin matches for each group
+//   const groupMatches: MatchType[] = [];
+//   let matchNumber = 1;
+//   for (let g = 0; g < groupCount; g++) {
+//     const groupTeams = groups[g];
+//     for (let i = 0; i < groupTeams.length; i++) {
+//       for (let j = i + 1; j < groupTeams.length; j++) {
+//         groupMatches.push({
+//           id: generateUUID(),
+//           stage: "group",
+//           group: g + 1,
+//           team1: groupTeams[i],
+//           team2: groupTeams[j],
+//           team1Score: 0,
+//           team2Score: 0,
+//           winner: null,
+//           status: MATCH_STATUS.PENDING,
+//         });
+//       }
+//     }
+//   }
+
+//   // --- Group results must be processed here after matches are played ---
+//   // Simulate/assume group results and select top teams, simplified here:
+//   // For example: select first playoffQualifiers teams (customize logic for ranking)
+//   const playoffTeams = teams.slice(0, playoffQualifiers);
+
+//   // 3. Generate knockout bracket (single elimination for semifinals and final)
+//   // Example with 4 playoff teams (semifinals, final, 3rd place)
+//   const knockoutMatches: MatchType[] = [];
+//   // Semifinals
+//   knockoutMatches.push({
+//     id: generateUUID(),
+//     stage: "knockout",
+//     team1: playoffTeams[0],
+//     team2: playoffTeams[3],
+//     team1Score: 0,
+//     team2Score: 0,
+//     winner: null,
+//     status: MATCH_STATUS.PENDING,
+//     tournamentId: "",
+//     position: 0
+//   });
+//   knockoutMatches.push({
+//     id: generateUUID(),
+//     round: 1,
+//     stage: "knockout",
+//     team1: playoffTeams[1],
+//     team2: playoffTeams[2],
+//     team1Score: 0,
+//     team2Score: 0,
+//     winner: null,
+//     status: "Pending",
+//   });
+//   // Final
+//   knockoutMatches.push({
+//     id: generateUUID(),
+//     round: 2,
+//     stage: "knockout",
+//     team1: null, // To be filled after semifinal winners
+//     team2: null,
+//     team1Score: 0,
+//     team2Score: 0,
+//     winner: null,
+//     status: MATCH_STATUS.PENDING,
+//   });
+//   // 3rd place (optional)
+//   knockoutMatches.push({
+//     id: generateUUID(),
+//     round: 2,
+//     stage: "knockout",
+//     team1: null,
+//     team2: null,
+//     team1Score: 0,
+//     team2Score: 0,
+//     winner: null,
+//     status: MATCH_STATUS.PENDING,
+//   });
+
+//   return {
+//     groups,
+//     groupMatches,
+//     playoffTeams,
+//     knockoutMatches,
+//   };
+// }

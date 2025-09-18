@@ -21,11 +21,11 @@ const CustomModal = ({ visible, onClose, children }: CustomModalProps) => {
 
   React.useEffect(() => {
     if (visible) {
-      opacity.value = withTiming(1, { duration: 200 });
+      opacity.value = withTiming(1, { duration: 100 });
       scale.value = withSpring(1, { damping: 15 });
     } else {
-      opacity.value = withTiming(0, { duration: 200 });
-      scale.value = withTiming(0.9, { duration: 200 });
+      opacity.value = withTiming(0, { duration: 100 });
+      scale.value = withTiming(0.9, { duration: 100 });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
@@ -40,7 +40,7 @@ const CustomModal = ({ visible, onClose, children }: CustomModalProps) => {
     opacity: opacity.value,
   }));
 
-  if (!visible && opacity.value === 0) return null; // Don't render when completely hidden
+  if (!visible && opacity.value === 0) return null;
 
   return (
     <Animated.View

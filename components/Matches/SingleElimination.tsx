@@ -21,8 +21,7 @@ type SingleEliminationType = {
 };
 
 const SingleElimination = ({ data, updateMatchData, simpleMode }: SingleEliminationType) => {
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const matches: Bracket = data.bracket || [];
+  const matches: Bracket = data.bracket;
   const rounds = Object.keys(data)
     .map(Number)
     .sort((a, b) => a - b);
@@ -139,7 +138,7 @@ const SingleElimination = ({ data, updateMatchData, simpleMode }: SingleEliminat
                       elevation: 3,
                     }}
                   >
-                    {[match.team1, match.team2].map((team) => (
+                    {[match.team1, match.team2].map((team, index) => (
                       <TouchableOpacity
                         key={team?.id}
                         style={{

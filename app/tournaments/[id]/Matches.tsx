@@ -1,16 +1,22 @@
 import CustomModal from "@/components/CustomModal";
 import RoundRobin from "@/components/Matches/RoundRobin";
 import SingleElimination from "@/components/Matches/SingleElimination";
+import SwissSystem from "@/components/Matches/SwissSystem";
 import LeaderBoard from "@/components/Svg/LeaderBoard";
 import {
-  generateDoubleElimination,
   generateRoundRobin,
   generateSingleElimination,
   generateSwissTournament,
 } from "@/functions/generateBracket";
 import { updateMatchData } from "@/functions/updateTournamentData";
 import { getTournamentById, patchTournament } from "@/services/databaseService";
-import { Bracket, MatchType, TOURNAMENT_FORMATS, TournamentType } from "@/types.ts/common";
+import {
+  Bracket,
+  DoubleEliminationBracket,
+  MatchType,
+  TOURNAMENT_FORMATS,
+  TournamentType,
+} from "@/types.ts/common";
 import { AntDesign, Entypo } from "@expo/vector-icons";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
@@ -48,9 +54,9 @@ const Matches = () => {
         matches = generateSingleElimination(tournamentData.teams, tournamentData.id);
         break;
 
-      case TOURNAMENT_FORMATS.DOUBLE_ELIM:
-        matches = generateDoubleElimination(tournamentData.teams, tournamentData.id);
-        break;
+      // case TOURNAMENT_FORMATS.DOUBLE_ELIM:
+      //   matches = generateDoubleElimination(tournamentData.teams, tournamentData.id);
+      //   break;
 
       case TOURNAMENT_FORMATS.ROUND_ROBIN:
         matches = generateRoundRobin(
@@ -79,19 +85,43 @@ const Matches = () => {
     }
   };
 
-  const generateLeaderboard = (bracket: Bracket) => {
+  const generateLeaderboard = useCallback((bracket: any, tournamentData: TournamentType) => {
     const pointsMap: Record<string, number> = {};
     tournamentData?.teams.forEach((team) => {
       pointsMap[team.id] = 0;
     });
 
-    Object.values(bracket).forEach((roundMatches) => {
-      roundMatches.forEach((match) => {
-        if (match.winner) {
-          pointsMap[match.winner] = (pointsMap[match.winner] || 0) + 1;
-        }
+    const processBracket = (br: Bracket | undefined) => {
+      if (!br) return;
+      console.log(br);
+      Object.values(br).forEach((roundMatches) => {
+        roundMatches.forEach((match) => {
+          if (match?.winner) {
+            pointsMap[match.winner] = (pointsMap[match.winner] || 0) + 1;
+          }
+        });
       });
-    });
+    };
+
+    if (bracket && !("winners" in bracket)) {
+      processBracket(bracket);
+    }
+
+    if (bracket?.winners) {
+      processBracket(bracket.winners);
+    }
+    if (bracket?.losers) {
+      processBracket(bracket.losers);
+    }
+    if (bracket?.grandFinal) {
+      if (bracket.grandFinal.winner) {
+        pointsMap[bracket.grandFinal.winner] = (pointsMap[bracket.grandFinal.winner] || 0) + 1;
+      }
+      if (bracket.grandFinal.resetMatch?.winner) {
+        pointsMap[bracket.grandFinal.resetMatch.winner] =
+          (pointsMap[bracket.grandFinal.resetMatch.winner] || 0) + 1;
+      }
+    }
 
     let leaderboard: LeaderBoardType[] = Object.entries(pointsMap).map(([id, points], index) => {
       const team = tournamentData?.teams.find((t) => t.id === id);
@@ -111,14 +141,14 @@ const Matches = () => {
     }));
 
     setLeaderBoard(leaderboard);
-  };
+  }, []);
 
   useEffect(() => {
     if (!tournamentData) return;
-    if (!tournamentData.bracket || Object.keys(tournamentData.bracket).length === 0) {
+    if (!tournamentData.bracket || Object.keys(tournamentData.bracket)?.length === 0) {
       generateMatches();
     }
-    if (tournamentData.bracket) generateLeaderboard(tournamentData.bracket);
+    if (tournamentData.bracket) generateLeaderboard(tournamentData.bracket, tournamentData);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tournamentData]);
 
@@ -155,26 +185,46 @@ const Matches = () => {
           <Entypo name={simpleMode ? "text" : "sweden"} size={30} color="white" />
         </Pressable>
       </View>
+      {tournamentData &&
+        tournamentData.bracket &&
+        (tournamentData.bracket["1"] ||
+          (tournamentData.bracket as DoubleEliminationBracket)["winners"]) && (
+          <View className="flex-1">
+            {tournamentData?.format === TOURNAMENT_FORMATS.ROUND_ROBIN && (
+              <RoundRobin
+                data={tournamentData}
+                updateMatchData={updateTournament}
+                simpleMode={simpleMode}
+              />
+            )}
 
-      {tournamentData?.format === TOURNAMENT_FORMATS.ROUND_ROBIN && (
-        <RoundRobin
-          data={tournamentData}
-          updateMatchData={updateTournament}
-          simpleMode={simpleMode}
-        />
-      )}
+            {tournamentData?.format === TOURNAMENT_FORMATS.SINGLE_ELIM && (
+              <SingleElimination
+                data={tournamentData}
+                updateMatchData={updateTournament}
+                simpleMode={simpleMode}
+              />
+            )}
 
-      {tournamentData?.format === TOURNAMENT_FORMATS.SINGLE_ELIM && (
-        <SingleElimination
-          data={tournamentData}
-          updateMatchData={updateTournament}
-          simpleMode={simpleMode}
-        />
-      )}
+            {/* {tournamentData?.format === TOURNAMENT_FORMATS.DOUBLE_ELIM && (
+              <DoubleElimination
+                data={tournamentData}
+                updateMatchData={updateTournament}
+                simpleMode={simpleMode}
+              />
+            )} */}
 
+            {tournamentData?.format === TOURNAMENT_FORMATS.SWISS && (
+              <SwissSystem
+                data={tournamentData}
+                updateMatchData={updateTournament}
+                simpleMode={simpleMode}
+              />
+            )}
+          </View>
+        )}
       <CustomModal onClose={() => setLeaderBoardOpen(false)} visible={leaderBoardOpen}>
         <View className="fle1w-[90%] bg-white rounded-2xl">
-          {/* Header */}
           <View className="w-full flex-row items-center justify-center relative mb-2">
             <Text className="text-lg font-bold text-center">LeaderBoard</Text>
             <TouchableOpacity

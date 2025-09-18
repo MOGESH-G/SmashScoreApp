@@ -82,7 +82,7 @@ const Players = () => {
   }
 
   return (
-    <View className="flex-1 w-full bg-yellow-100">
+    <View className="flex-1 w-full">
       <View className="w-full flex-row bg-secondary h-[5rem] items-center justify-between pl-3 pr-8 gap-3">
         {/* <Pressable className="w-auto" onPress={() => router.back()}>
           <AntDesign name="arrowleft" size={24} color="white" />

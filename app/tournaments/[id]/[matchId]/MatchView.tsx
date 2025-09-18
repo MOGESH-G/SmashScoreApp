@@ -233,10 +233,14 @@ const MatchView = () => {
           className="absolute w-[20%] h-[20%] bg-white
         gap-1 top-2 border-white border-4 flex flex-row"
         >
-          <View className="flex-1 h-full bg-black justify-center items-center">
+          <View
+            className={`flex-1 h-full justify-center items-center ${matchData.winner === matchData.team1?.id ? "bg-[#4CAF50]" : "bg-black"}`}
+          >
             <Text className="text-3xl text-white">{matchData?.team1Score}</Text>
           </View>
-          <View className="flex-1 h-full bg-black justify-center items-center">
+          <View
+            className={`flex-1 h-full justify-center items-center ${matchData.winner === matchData.team2?.id ? "bg-[#4CAF50]" : "bg-black"}`}
+          >
             <Text className="text-3xl text-white">{matchData?.team2Score}</Text>
           </View>
         </View>
