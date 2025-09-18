@@ -11,8 +11,18 @@ export type TeamType = {
   id: string;
   name: string;
   players: PlayerType[];
-  wins: 0;
-  losses: 0;
+  wins: number;
+  losses: number;
+};
+
+export type Bracket = {
+  [roundOrSet: number]: MatchType[];
+};
+
+export type DoubleEliminationBracket = {
+  winners: Bracket;
+  losers: Bracket;
+  grandFinal: MatchType;
 };
 
 export type TournamentType = {
@@ -22,7 +32,7 @@ export type TournamentType = {
   sets?: number;
   mode: TOURNAMENT_MODE;
   teams: TeamType[];
-  bracket: MatchType[];
+  bracket: Bracket;
   status: MATCH_STATUS;
   pointsPerMatch: number;
   tieBreakerPoints?: number;
@@ -36,8 +46,8 @@ export type MatchType = {
   tournamentId: string;
   team1: TeamType | null;
   team2: TeamType | null;
-  team1Score: 0;
-  team2Score: 0;
+  team1Score: number;
+  team2Score: number;
   winner: string | null;
   status: MATCH_STATUS;
   position: number;
@@ -45,7 +55,7 @@ export type MatchType = {
 
 export enum TOURNAMENT_FORMATS {
   SINGLE_ELIM = "Single Elimination",
-  DOUBLE_ELIM = "Double Elimination",
+  // DOUBLE_ELIM = "Double Elimination",
   ROUND_ROBIN = "Round Robin",
   SWISS = "Swiss System",
 }

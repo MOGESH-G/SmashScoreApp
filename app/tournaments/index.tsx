@@ -27,7 +27,7 @@ const initialTournamentData: TournamentType = {
   id: "",
   name: "",
   format: TOURNAMENT_FORMATS.SINGLE_ELIM,
-  sets: 0,
+  sets: 1,
   mode: TOURNAMENT_MODE.SINGLES,
   teams: [],
   pointsPerMatch: 21,
@@ -95,7 +95,7 @@ const Index = () => {
       };
       const result = await createTournament(data);
       if (result?.lastInsertRowId) {
-        router.push(`/tournaments/${result.lastInsertRowId}/Teams`);
+        router.push(`/tournaments/${data.id}/Teams`);
       }
     }
   };
